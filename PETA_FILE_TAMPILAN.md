@@ -1,104 +1,78 @@
-# PETA STRUKTUR FILE TAMPILAN (BLADE VIEWS) — SULUH CAREER ROADMAP
-Dokumen ini memetakan seluruh file tampilan (*Blade views*) di dalam direktori `resources/views/` berdasarkan kategori fungsinya (Publik, Admin, Input Pengguna, Dasbor khusus, dan Komponen Reusable). Gunakan dokumen ini sebagai contekan (*cheat sheet*) saat presentasi UAS jika dosen menanyakan lokasi file tertentu.
+# PETA STRUKTUR TAMPILAN (BLADE VIEWS) & KONTROLER (CONTROLLERS) — SULUH CAREER ROADMAP
+Dokumen ini memetakan hubungan antara halaman tampilan (*Blade views*), pengendali (*Controller*), rute (*Web/API routes*), serta logika bisnis yang dijalankan. Gunakan peta ini saat presentasi UAS untuk menjelaskan bagaimana request dari peramban diproses oleh Controller hingga menghasilkan tampilan Blade.
 
 ---
 
-## 📂 1. LAYOUT & TEMPLATE UTAMA
-File-file di kategori ini menjadi kerangka HTML dasar, pembungkus aset CSS/JS (`@vite`), serta menu navigasi sidebar/header.
+## 📂 1. STRUKTUR UTAMA, LAYOUT, & CHATBOT
 
-| Lokasi File | Fungsi Utama | Keterangan Teknis |
-|---|---|---|
-| [layouts/app.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/app.blade.php) | **Layout Utama Mentee / Pengguna Biasa** | Menyediakan sidebar navigasi mentee dan memuat **widget chatbot asisten karir** di pojok kanan bawah secara global. |
-| [layouts/admin.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/admin.blade.php) | **Layout Utama Panel Admin** | Menyediakan sidebar navigasi khusus kelola konten admin dan memuat script pembantu modal `@stack('modals')`. |
-| [layouts/auth.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/auth.blade.php) | **Layout Halaman Otentikasi** | Kerangka minimalis tanpa sidebar untuk login dan registrasi. |
-| [layouts/public.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/public.blade.php) | **Layout Halaman Publik** | Kerangka dengan navigasi header atas (*navbar*) dan footer publik. |
-
----
-
-## 🌐 2. HALAMAN AKSES PUBLIK (Tanpa Login / Bebas Akses)
-Halaman yang dapat diakses oleh siapa saja (tamu/guest) melalui peramban.
-
-| Lokasi File | Fungsi Tampilan | Deskripsi Halaman |
-|---|---|---|
-| [welcome.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/welcome.blade.php) | **Landing Page** | Halaman utama penyambutan platform Suluh, berisi visi, diagram filosofi, dan tombol ajakan mendaftar. |
-| [public/ethics.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/public/ethics.blade.php) | **Transparansi Komite Etika Data** | Menampilkan daftar proposal kebijakan pengolahan data publik dan status voting keputusan. |
-| [public/api-docs.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/public/api-docs.blade.php) | **Dokumentasi API Publik** | Halaman interaktif bagi peneliti riset yang menampilkan list API endpoint, contoh cURL, dan panel test live respons JSON. |
+| Nama Layout / Fitur | File Blade View | File Controller | Rute (Route) & Method | Keterangan Teknis |
+|---|---|---|---|---|
+| **Layout Utama Mentee** | [layouts/app.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/app.blade.php) | (Global Layout) | Middleware: `auth` | Kerangka dasar, sidebar mentee, notifikasi, dan **Widget Chatbot Melayang**. |
+| **Layout Panel Admin** | [layouts/admin.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/layouts/admin.blade.php) | (Global Layout) | Middleware: `auth`, `admin` | Kerangka kerja panel admin dengan pemanggilan tumpukan modal `@stack('modals')`. |
+| **Chatbot Asisten Karir** | (Terintegrasi di `layouts/app`) | [ChatbotController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/ChatbotController.php) | `POST /chatbot/message`<br>Method: `message()` | Menerima chat mentee, mengirim riwayat ke AI (Gemini/Groq), dan merespons via JSON. |
+| **Notifikasi Sistem** | [app/notifications.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/notifications.blade.php) | [NotificationController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/NotificationController.php) | `GET /notifications`<br>Method: `index()` | Menampilkan notifikasi pencapaian CRS atau umpan balik dari mentor. |
 
 ---
 
-## 🔑 3. HALAMAN LOGIN & REGISTRASI (Authentication)
-Wadah entri akun untuk masuk ke dalam sistem.
+## 🌐 2. HALAMAN AKSES PUBLIK (Tanpa Login)
 
-| Lokasi File | Jenis Input | Deskripsi Form |
-|---|---|---|
-| [auth/login.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/login.blade.php) | **Form Input Kredensial** | Kolom Email, Password, Checkbox Remember Me, dan Tombol Login Google OAuth. |
-| [auth/register.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/register.blade.php) | **Form Register Mentee** | Kolom Nama Lengkap, Email, Password, Konfirmasi Password, serta penanganan error validasi merah per-field. |
-| [auth/register-institution.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/register-institution.blade.php) | **Form Register Institusi Mitra** | Input data sekolah/kampus ditambah **kolom validasi kode akses** (`SULUH-MITRA-2026`) sebagai pengaman. |
-
----
-
-## 🧭 4. HALAMAN KHUSUS MENTEE & INPUT PENGGUNA
-Halaman aplikasi setelah mentee berhasil masuk (*authenticated*), berisi menu pelacakan karir dan pengerjaan kuesioner.
-
-### A. Tampilan Berbasis Formulir / Input Pengguna (User Inputs)
-| Lokasi File | Jenis Input Pengguna | Tujuan Formulir |
-|---|---|---|
-| [app/onboarding.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/onboarding.blade.php) | **Form Onboarding** | Mengisi Usia, Pendidikan Terakhir, dan Pengalaman Kerja. |
-| [app/assessment.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/assessment.blade.php) | **Form Kuesioner Asesmen** | Menyajikan 30 soal skenario RIASEC + Big Five (dilengkapi tombol Simpan Draft & Submit). |
-| [app/skill-validation.blade.php](file:///c:/FIKKAN%20/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/skill-validation.blade.php) | **Form Kuis Validasi Skill** | Pertanyaan skenario studi kasus teknis/non-teknis dengan input teks esai deskriptif. |
-| [app/survey.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/survey.blade.php) | **Form Survei Longitudinal** | Input status pekerjaan, penyerapan skill, dan penilaian dampak platform di bulan ke-3 & ke-6. |
-| [app/pivot.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/pivot.blade.php) | **Form Refleksi Pivot Karir** | Input refleksi mandiri sebelum berpindah jalur karir. |
-| [app/profile-settings.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/profile-settings.blade.php) | **Form Pengaturan Profil** | Kolom perubahan Nama Lengkap, Username Publik, dan unggah foto profil (*avatar*). |
-
-### B. Tampilan Halaman Dashboard & Evaluasi
-| Lokasi File | Fungsi Utama Halaman | Elemen Penting di Dalamnya |
-|---|---|---|
-| [app/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/dashboard.blade.php) | **Dashboard Mentee** | Kartu CRS progres, kotak **Umpan Balik Mentor**, dan **Daftar Rekomendasi Loker Auto-Match**. |
-| [app/assessment-result.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/assessment-result.blade.php) | **Hasil Tes Kepribadian** | Grafik radar kepribadian RIASEC, detail trait Big Five, dan 3 kartu rekomendasi karir AI. |
-| [app/career-detail.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/career-detail.blade.php) | **Informasi Detail Karir** | Grafik kesenjangan skill (*skill gap chart*), rentang gaji, dan tombol konfirmasi pilih karir. |
-| [app/roadmap.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/roadmap.blade.php) | **Roadmap Visual** | Garis linier langkah ajar ber-ikon (Fondasi, Menengah, Lanjutan) buatan AI. |
-| [app/skill-progress.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/skill-progress.blade.php) | **Skill Tracker** | Checklist dan dropdown status per skill (not started, learning, in progress, done). |
-| [app/export.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/export.blade.php) | **Halaman Ekspor Data** | Halaman berisi tombol download data mentah JSON dan cetak ringkasan PDF via POST form aman. |
-| [app/archive.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/archive.blade.php) | **Arsip Perjalanan** | Riwayat peta jalan karir terdahulu sebelum mentee melakukan pivot karir. |
-| [app/notifications.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/notifications.blade.php) | **Notifikasi Sistem** | Riwayat notifikasi status progres atau feedback baru. |
+| Halaman | File Blade View | File Controller | Rute (Route) & Method | Deskripsi |
+|---|---|---|---|---|
+| **Landing Page** | [welcome.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/welcome.blade.php) | [PublicController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/PublicController.php) | `GET /`<br>Method: `landing()` | Halaman selamat datang platform berisi grafik promosi & CTA. |
+| **Dampak Publik** | [public/impact.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/public/impact.blade.php) | [PublicController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/PublicController.php) | `GET /impact`<br>Method: `impact()` | Menampilkan metrik CRS agregat publik per-provinsi secara anonim. |
+| **Komite Etika Data** | [public/ethics.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/public/ethics.blade.php) | [DataEthicsController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/DataEthicsController.php) | `GET /ethics`<br>Method: `index()` | Halaman publik proposal etika. Jika login, layout render sidebar. |
+| **Dokumentasi API** | [public/api-docs.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/public/api-docs.blade.php) | (Anonymous View Route) | `GET /api-docs` | Dokumentasi API interaktif dengan sandbox live response JSON. |
 
 ---
 
-## 👥 5. HALAMAN AKSES KHUSUS ADMIN (Admin Panel)
-Halaman yang dilindungi middleware `admin` untuk mengelola operasional basis data konten.
+## 🔑 3. AUTENTIKASI & REGISTRASI (Auth Flow)
 
-| Lokasi File | Fungsi Manajemen Konten | Elemen Form & Input Admin |
-|---|---|---|
-| [admin/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/dashboard.blade.php) | **Statistik Global Platform** | Kartu data total pengguna, grafik sebaran wilayah, dan peta distribusi karir. |
-| [admin/careers.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/careers.blade.php) | **Kelola Katalog Karir** | Tabel data karir dan **Modal Input Tambah/Edit Karir** (Nama karir, deskripsi, kode RIASEC, rentang gaji). |
-| [admin/questions.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/questions.blade.php) | **Kelola Soal Asesmen** | Tabel bank soal dan **Modal Input Tambah Soal** (Naskah skenario, opsi jawaban, bobot RIASEC/Big Five). |
-| [admin/ethics.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/ethics.blade.php) | **Moderasi Komite Etika** | Tabel list proposal dan **Modal Input Tambah Proposal** (Judul kebijakan, konteks data, status voting, keputusan). |
-| [admin/users.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/users.blade.php) | **Kelola Peran & Moderasi User** | Tabel list user, modal edit role/hapus (terproteksi untuk admin), dan **Modal Form Generate Akun Baru Acak** (JS). |
+| Halaman Form | File Blade View | File Controller | Rute (Route) & Method | Logic Form Input |
+|---|---|---|---|---|
+| **Form Login** | [auth/login.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/login.blade.php) | [AuthController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/AuthController.php) | `GET /login` -> `showLogin()` <br> `POST /login` -> `login()` | Menginput Email/Password dan verifikasi sesi. |
+| **Register Mentee** | [auth/register.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/register.blade.php) | [AuthController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/AuthController.php) | `GET /register` -> `showRegister()` <br> `POST /register` -> `register()` | Form registrasi user dengan validasi input merah per-field. |
+| **Register Institusi** | [auth/register-institution.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/auth/register-institution.blade.php) | [AuthController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/AuthController.php) | `GET /register/institution` -> `showRegisterInstitution()` <br> `POST /register/institution` -> `registerInstitution()` | Form khusus universitas dengan input validasi kode akses (`SULUH-MITRA-2026`). |
 
 ---
 
-## 🏛️ 6. HALAMAN AKSES MENTOR & INSTITUSI MITRA
-Halaman bagi entitas pengawas (mentor dan universitas/lembaga mitra).
+## 🧭 4. ALUR UTAMA MENTEE (User Dashboard & Inputs)
 
-| Lokasi File | Fungsi Halaman | Elemen Input / Tampilan |
-|---|---|---|
-| [mentor/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/mentor/dashboard.blade.php) | **Dashboard Mentor** | Menampilkan daftar seluruh mentee yang berada di bawah bimbingannya. |
-| [mentor/mentee-detail.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/mentor/mentee-detail.blade.php) | **Detail Progres Mentee** | Grafik Radar Skill Gap mentee, checklist progres skill, dan **Form Input Masukan Feedback Mentor** kualitatif. |
-| [institution/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/institution/dashboard.blade.php) | **Dashboard Agregat Kampus** | Grafik Donut sebaran karir siswa, Grafik Bar distribusi CRS, Grafik Line tren pertumbuhan, dan **Panel Generate/Revoke API Key**. |
+Halaman-halaman yang diakses mentee untuk melacak karir mereka.
+
+| Langkah Fitur | File Blade View | File Controller | Rute (Route) & Method | Logic Bisnis & Input Form |
+|---|---|---|---|---|
+| **1. Onboarding** | [app/onboarding.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/onboarding.blade.php) | [OnboardingController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/OnboardingController.php) | `GET /onboarding` -> `show()` <br> `POST /onboarding` -> `store()` | **Input Form:** Mengisi Usia, Pendidikan terakhir, dan Pengalaman kerja. |
+| **2. Tes Asesmen** | [app/assessment.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/assessment.blade.php) | [AssessmentController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/AssessmentController.php) | `GET /assessment` -> `show()` <br> `POST /assessment` -> `submit()` <br> `POST /assessment/save-draft` | **Input Form:** Pengisian kuis radio 30 soal RIASEC + Big Five. Menyimpan draft di basis data. |
+| **3. Hasil Asesmen** | [app/assessment-result.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/assessment-result.blade.php) | [AssessmentController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/AssessmentController.php) | `GET /assessment/result`<br>Method: `result()` | Mengambil radar chart kepribadian, menghitung skor kecocokan karir, dan menampilkan rekomendasi narasi AI. |
+| **4. Detail Karir** | [app/career-detail.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/career-detail.blade.php) | [CareerController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/CareerController.php) | `GET /career/{id}` -> `show()` <br> `POST /career/{id}/choose` -> `choose()` | **Pilihan Karir:** Memilih profesi secara definitif, menginisiasi baris progres skill (`user_progress`). |
+| **5. Dasbor Utama** | [app/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/dashboard.blade.php) | [DashboardController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/DashboardController.php) | `GET /dashboard`<br>Method: `index()` | Memaparkan sisa skill gap, umpan balik dari mentor, milestone narasi, dan lowongan kerja virtual. |
+| **6. Roadmap Karir** | [app/roadmap.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/roadmap.blade.php) | [RoadmapController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/RoadmapController.php) | `GET /roadmap`<br>Method: `index()` | Menyusun visualisasi linier modul ajar per tingkat kematangan (AI generated jika kosong). |
+| **7. Progres Skill** | [app/skill-progress.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/skill-progress.blade.php) | [SkillProgressController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/SkillProgressController.php) | `GET /skill-progress`<br>Method: `index()` <br> `PATCH /skill-progress/{id}` -> `update()` | **Input Form:** Mengubah status belajar (learning, in progress, done). |
+| **8. Validasi Skill** | [app/skill-validation.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/skill-validation.blade.php) | [SkillValidationController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/SkillValidationController.php) | `GET /skill/{id}/validate` -> `show()` <br> `POST /skill/{id}/validate` -> `store()` | **Input Form:** Kuis skenario reflektif dengan input esai deskriptif pengguna. |
+| **9. Pivot Karir** | [app/pivot.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/pivot.blade.php) | [PivotController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/PivotController.php) | `GET /pivot` -> `show()` <br> `POST /pivot` -> `store()` | **Input Form:** Mengisi 3 kolom esai evaluasi pivot, mengarsipkan roadmap lama ke database. |
+| **10. Ekspor Data** | [app/export.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/export.blade.php) | [ExportController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/ExportController.php) | `GET /export` -> `index()` <br> `POST /export/pdf` -> `pdf()` <br> `POST /export/json` -> `json()` | Mengunduh profil dalam format data terenkripsi JSON dan portofolio cetak PDF (POST request). |
+| **11. Profil Pengguna** | [app/profile-settings.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/app/profile-settings.blade.php) | [PublicProfileController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/PublicProfileController.php) | `GET /profile/settings` -> `settings()` <br> `POST /profile/settings` -> `updateSettings()` | **Input Form:** Mengedit Nama Lengkap, Username unik, dan Upload file foto avatar profil. |
 
 ---
 
-## 🧩 7. KOMPONEN REUSABLE (Blade Components)
-Komponen-komponen UI kecil yang dipanggil berulang kali di berbagai view menggunakan tag `<x-...>`.
+## 👥 5. PANEL MANAJEMEN ADMIN (Terproteksi Middleware Admin)
 
-*   `components/assessment-question.blade.php`: Merender butir soal kuesioner dengan styling input radio reaktif.
-*   `components/career-card.blade.php`: Merender kartu ringkasan karir rekomendasi beserta persentase match.
-*   `components/roadmap-card.blade.php`: Merender satu kotak unit kompetensi visual di halaman roadmap.
-*   `components/skill-badge.blade.php`: Merender lencana level keahlian (Foundation, Intermediate, Advanced) dan status progres.
-*   `components/progress-bar.blade.php`: Bar persentase Career Readiness Score (CRS) dengan animasi transisi CSS.
-*   `components/skill-gap-chart.blade.php`: Visualisasi diagram kesenjangan skill mentee dibandingkan standar industri.
-*   `components/privacy-notice.blade.php`: Banner peringatan privasi data agregat anonim (dipanggil di dashboard institusi).
-*   `components/data-export-panel.blade.php`: Komponen pembungkus panel form POST untuk ekspor data.
-*   `components/reflection-prompt.blade.php`: Kuesioner pertanyaan reflektif saat pengguna melakukan pivot.
-*   `components/context-prompt.blade.php`: Banner modal penyesuaian pertanyaan kontekstual berdasarkan Context Score pengguna.
-*   `components/impact-stat.blade.php`: Kotak metrik statistik kuantitatif pada halaman `/impact` publik.
+Seluruh modul kontrol database admin yang kini telah dipisah menjadi submenu mandiri.
+
+| Modul Halaman | File Blade View | File Controller | Rute (Route) & Method | Logic Bisnis & Modal Input Admin |
+|---|---|---|---|---|
+| **Dashboard Admin** | [admin/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/dashboard.blade.php) | [AdminDashboardController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Admin/AdminDashboardController.php) | `GET /admin`<br>Method: `index()` | Mengambil data agregat analitik sebaran pengguna per wilayah dan performa CRS global. |
+| **Kelola Karir** | [admin/careers.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/careers.blade.php) | [AdminManagementController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Admin/AdminManagementController.php) | `GET /admin/careers` -> `careersIndex()` <br> `POST /admin/careers` -> `storeCareer()` <br> `PUT /admin/careers/{id}` -> `updateCareer()` <br> `DELETE /admin/careers/{id}` -> `destroyCareer()` | **Input Admin (Modal):** CRUD data karir industri baru (nama, deskripsi, kode RIASEC, standar gaji). |
+| **Kelola Asesmen Soal** | [admin/questions.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/questions.blade.php) | [AdminManagementController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Admin/AdminManagementController.php) | `GET /admin/questions` -> `questionsIndex()` <br> `POST /admin/questions` -> `storeQuestion()` <br> `PUT /admin/questions/{id}` -> `updateQuestion()` <br> `DELETE /admin/questions/{id}` -> `destroyQuestion()` | **Input Admin (Modal):** CRUD bank soal asesmen (naskah kuesioner, dimensi RIASEC, kategori Big Five). |
+| **Komite Etika** | [admin/ethics.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/ethics.blade.php) | [AdminManagementController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Admin/AdminManagementController.php) | `GET /admin/ethics` -> `ethicsIndex()` <br> `POST /admin/ethics` -> `storeEthics()` <br> `DELETE /admin/ethics/{id}` -> `destroyEthics()` | **Input Admin (Modal):** CRUD pengajuan proposal etika (judul kebijakan, deskripsi konteks data). |
+| **Kelola Pengguna** | [admin/users.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/admin/users.blade.php) | [AdminManagementController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Admin/AdminManagementController.php) | `GET /admin/users` -> `usersIndex()` <br> `POST /admin/users` -> `storeUser()` <br> `PUT /admin/users/{id}` -> `updateUser()` <br> `DELETE /admin/users/{id}` -> `destroyUser()` | **Input Admin (Modal):** Mengubah role user, menghapus user (diblokir jika target adalah akun admin). **Generate Akun Otomatis** dengan JS. |
+
+---
+
+## 🏛️ 6. DASBOR MENTOR & INSTITUSI MITRA (ROLE LAIN)
+
+| Peran (Role) | File Blade View | File Controller | Rute (Route) & Method | Logic Bisnis & Input Form |
+|---|---|---|---|---|
+| **Mentor Dashboard** | [mentor/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/mentor/dashboard.blade.php) | [MentorDashboardController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Mentor/MentorDashboardController.php) | `GET /mentor`<br>Method: `index()` | Menarik daftar mentee yang didelegasikan di bawah pengawasannya. |
+| **Evaluasi Mentee** | [mentor/mentee-detail.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/mentor/mentee-detail.blade.php) | [MentorDashboardController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Mentor/MentorDashboardController.php) | `GET /mentor/mentee/{userId}` -> `showMentee()` <br> `POST /mentor/mentee/{userId}/feedback` -> `storeFeedback()` | **Input Mentor:** Menampilkan radar gap analisis skill mentee dan kolom form input umpan balik belajar kualitatif. |
+| **Mitra Kampus** | [institution/dashboard.blade.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/resources/views/institution/dashboard.blade.php) | [InstitutionDashboardController.php](file:///c:/FIKKAN/kuliah/SEMESTER%204/PEMROGAMAN%20WEB%20LANJUT/TUGAS/UAS/pemwebapiuas/pemwebapiuas/app/Http/Controllers/Institution/InstitutionDashboardController.php) | `GET /institution` -> `index()` <br> `POST /institution/api-key/generate` -> `generateApiKey()` <br> `POST /institution/api-key/revoke` -> `revokeApiKey()` | **Input Institusi:** Dashboard analitik agregat siswa. Tombol trigger untuk melakukan pendaftaran dan pembatalan API Key riset. |
