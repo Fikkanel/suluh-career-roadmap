@@ -21,7 +21,10 @@
         </div>
         <nav class="flex-1 p-3 flex flex-col gap-1">
             <a href="{{ route('admin.dashboard') }}"  class="nav-link {{ request()->routeIs('admin.dashboard')  ? 'active' : '' }}">📊 Dashboard</a>
-            <a href="{{ route('admin.management') }}" class="nav-link {{ request()->routeIs('admin.management') ? 'active' : '' }}">⚙️ Manajemen</a>
+            <a href="{{ route('admin.careers.index') }}" class="nav-link {{ request()->routeIs('admin.careers.*') ? 'active' : '' }}">💼 Kelola Karir</a>
+            <a href="{{ route('admin.questions.index') }}" class="nav-link {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}">🧭 Kelola Asesmen</a>
+            <a href="{{ route('admin.ethics.index') }}" class="nav-link {{ request()->routeIs('admin.ethics.*') ? 'active' : '' }}">⚖️ Komite Etika</a>
+            <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">👥 Kelola Pengguna</a>
         </nav>
         <div class="p-3 border-t" style="border-color:var(--border);">
             <form method="POST" action="{{ route('logout') }}">

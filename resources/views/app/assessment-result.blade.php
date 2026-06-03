@@ -1,5 +1,5 @@
 <x-layouts.app title="Hasil Asesmen">
-    <x-slot:heading>Kemungkinan yang Layak Kamu Eksplorasi</x-slot:heading>
+    <x-slot:heading>Rekomendasi Karir Terkunci Untukmu</x-slot:heading>
 
     <div class="max-w-4xl mx-auto">
         @if(session('pivot'))
@@ -15,32 +15,54 @@
         <div class="mb-7">
             @if(!empty($narrative))
                 <div class="card mb-5 card-accent-left">
-                    <p class="text-sm" style="line-height:1.7;color:var(--fg);">{{ $narrative }}</p>
+                    <div class="text-sm narrative-container" style="line-height:1.8;color:var(--fg);">
+                        {!! nl2br(preg_replace('/^\*\s*(.*?)$/m', '&bull; $1', preg_replace('/\*\*(.*?)\*\*/', '<b>$1</b>', e($narrative)))) !!}
+                    </div>
                 </div>
             @endif
-            <p class="text-sm mb-3" style="color:var(--muted);line-height:1.65;max-width:40rem;">
-                Tiga arah di bawah ini selaras dengan pola jawabanmu. Bukan ranking — bukan rekomendasi final.
-                Kamu tetap memegang keputusan akhirnya.
-            </p>
-            <div class="card card-accent-left" style="background:var(--accent-soft);border-left-color:var(--accent);">
+
+            @php
+                $hasTransitionPath = collect($recommendations)->contains(fn($r) => !($r['is_major_match'] ?? false));
+            @endphp
+
+            @if($hasTransitionPath)
+                {{-- Pivot / Transition Path Notice --}}
+                <div class="card mb-5" style="background:var(--warning-soft, #fef9c3);border-left:3px solid var(--warning, #ca8a04);padding:1rem 1.25rem;">
+                    <p class="text-sm font-semibold mb-1" style="color:var(--warning, #ca8a04);">🔀 Jalur Transisi Karir Tersedia</p>
+                    <p class="text-sm" style="color:var(--fg);line-height:1.65;">
+                        Beberapa rekomendasi di bawah mengarah ke bidang yang berbeda dari jurusan kuliahmu (<strong>{{ auth()->user()->major }}</strong>).
+                        Rekomendasi ini didasarkan pada <strong>pola minat psikologis dan kepribadianmu</strong>. Keterampilan yang telah kamu peroleh dari jurusanmu tetap bernilai tinggi dan dapat ditransfer ke bidang baru tersebut!
+                    </p>
+                </div>
+            @else
+                <p class="text-sm mb-4" style="color:var(--muted);line-height:1.65;max-width:40rem;">
+                    Berdasarkan isian kuesioner asesmen dan jurusan kuliahmu (<strong>{{ auth()->user()->major }}</strong>), sistem telah menentukan beberapa rekomendasi karir berikut yang paling selaras untukmu.
+                </p>
+            @endif
+
+            <div class="card card-accent-left mb-6" style="background:var(--accent-soft);border-left-color:var(--accent);">
                 <p class="text-sm font-semibold mb-1" style="color:var(--accent);">💡 Langkah selanjutnya:</p>
                 <p class="text-sm" style="color:var(--fg);line-height:1.6;">
-                    Klik <strong>"Pelajari lebih lanjut"</strong> pada karir yang menarik perhatianmu untuk melihat detail skill yang dibutuhkan. 
-                    Setelah yakin, klik <strong>"Pilih karir ini"</strong> untuk memulai roadmap pembelajaran.
+                    Klik <strong>"Pelajari lebih lanjut"</strong> pada salah satu kartu karir di bawah untuk melihat detail kurikulum skill yang dibutuhkan. 
+                    Setelah yakin, pilih karir tersebut untuk mengaktifkan roadmap pembelajaran personalisasimu.
                 </p>
             </div>
         </div>
 
-        {{-- PENTING: Semua kartu ditampilkan setara. Tidak ada yang di-spotlight atau auto-select. --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            @foreach($recommendations as $rec)
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            @forelse($recommendations as $rec)
                 <x-career-card
                     :career="$rec"
-                    :matchPercent="$rec['matchPercent']"
-                    :reasons="$rec['reasons']"
-                    :cautions="$rec['cautions']"
+                    :matchPercent="$rec['matchPercent'] ?? null"
+                    :reasons="$rec['reasons'] ?? []"
+                    :cautions="$rec['cautions'] ?? []"
+                    :isMajorMatch="$rec['is_major_match'] ?? false"
                     :detailUrl="route('career.detail', $rec['id'])" />
-            @endforeach
+            @empty
+                <div class="col-span-3 text-center py-6">
+                    <p class="text-sm" style="color:var(--muted);">Tidak ada rekomendasi karir yang ditemukan.</p>
+                </div>
+            @endforelse
         </div>
 
         <div class="card py-8" style="text-align:center;">
@@ -49,7 +71,7 @@
             </div>
             <h3 class="font-semibold mb-2">Butuh waktu untuk mempertimbangkan?</h3>
             <p class="text-sm mb-5" style="color:var(--muted);max-width:28rem;margin-left:auto;margin-right:auto;line-height:1.6;">
-                Hasil ini tersimpan. Kamu bisa kembali kapan saja, baca detail setiap opsi,
+                Hasil ini tersimpan. Kamu bisa kembali kapan saja, baca detail rekomendasi karirmu,
                 dan memutuskan saat kamu siap.
             </p>
             <a href="{{ route('dashboard') }}" class="btn btn-ghost">Kembali ke Dashboard</a>

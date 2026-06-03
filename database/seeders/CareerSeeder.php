@@ -66,6 +66,34 @@ class CareerSeeder extends Seeder
                 'riasec_code'       => 'IRA',
                 'industry_standard' => 'Infrastruktur Cloud',
             ],
+            [
+                'name'              => 'Guru Sekolah Dasar (Guru SD)',
+                'slug'              => 'guru-sd',
+                'description'       => 'Mendidik dan membimbing siswa sekolah dasar dalam berbagai mata pelajaran dasar serta pembentukan karakter. Karir ini sangat mulia dan berorientasi pada empati, kesabaran, serta pemahaman mendalam tentang perkembangan psikologi anak.',
+                'riasec_code'       => 'SAE',
+                'industry_standard' => 'Pendidikan',
+            ],
+            [
+                'name'              => 'Tutor / Guru Bimbel',
+                'slug'              => 'guru-bimbel',
+                'description'       => 'Mengajar dan membantu siswa memahami materi akademis sekolah di lembaga bimbingan belajar secara interaktif, menyenangkan, dan fokus pada metode penyelesaian masalah praktis.',
+                'riasec_code'       => 'SEC',
+                'industry_standard' => 'Pendidikan & Pelatihan',
+            ],
+            [
+                'name'              => 'Penulis Buku Parenting & Edukasi',
+                'slug'              => 'penulis-parenting',
+                'description'       => 'Menulis artikel, buku, dan konten edukatif seputar pola asuh anak, psikologi keluarga, dan teknik pembelajaran kreatif bagi orang tua maupun pendidik di media digital maupun cetak.',
+                'riasec_code'       => 'ASE',
+                'industry_standard' => 'Media & Penerbitan',
+            ],
+            [
+                'name'              => 'Staf Administrasi Publik (PNS)',
+                'slug'              => 'pns-adm',
+                'description'       => 'Mengelola dokumen administrasi, pelayanan publik, kearsipan, dan koordinasi operasional pada instansi pemerintah daerah maupun pusat guna menyelenggarakan tata pamong pemerintahan yang bersih dan melayani.',
+                'riasec_code'       => 'CSE',
+                'industry_standard' => 'Administrasi Publik',
+            ],
         ];
 
         foreach ($careers as $career) {

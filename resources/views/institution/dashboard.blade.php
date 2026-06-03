@@ -18,6 +18,64 @@
             </div>
         </div>
 
+        {{-- API Key Management Card --}}
+        <div class="card mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-sm font-semibold m-0">Kunci API Riset &amp; Integrasi (API Key)</h2>
+                @if(auth()->user()->api_key)
+                    <span class="badge badge-success">Aktif</span>
+                @else
+                    <span class="badge badge-default">Belum Dibuat</span>
+                @endif
+            </div>
+            <p class="text-xs mb-4" style="color:var(--muted); line-height:1.6;">
+                Gunakan Kunci API ini untuk mengintegrasikan data agregat riset alumni/mahasiswa Anda dengan sistem akademik eksternal atau portal analitik kampus melalui header <code>X-API-KEY</code>.
+            </p>
+
+            @if(auth()->user()->api_key)
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3 rounded-lg mb-4" style="background: var(--surface-2); border: 1px solid var(--border);">
+                    <code class="font-mono text-sm break-all flex-1 select-all" id="api-key-text" style="color: var(--accent-warm);">{{ auth()->user()->api_key }}</code>
+                    <button class="btn btn-ghost btn-sm" onclick="copyApiKey()" id="copy-btn">📋 Salin Kunci</button>
+                </div>
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                    <p class="text-[11px] m-0" style="color: var(--danger); font-weight: 500;">
+                        ⚠️ PENTING: Jaga kerahasiaan kunci ini. Jangan pernah membagikannya ke publik.
+                    </p>
+                    <form action="{{ route('institution.api-key.revoke') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan kunci API ini? Seluruh integrasi aktif akan terputus.')">
+                        @csrf
+                        <button type="submit" class="btn btn-danger btn-sm">🔒 Revoke Key</button>
+                    </form>
+                </div>
+            @else
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-lg" style="background: var(--accent-soft); border: 1px dashed var(--accent);">
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold mb-1" style="color: var(--accent);">Siap Melakukan Integrasi?</p>
+                        <p class="text-[11px] m-0 text-gray-700">Buat kunci API baru untuk mulai mengakses endpoint riset akademik publik.</p>
+                    </div>
+                    <form action="{{ route('institution.api-key.generate') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm">🔑 Generate API Key</button>
+                    </form>
+                </div>
+            @endif
+        </div>
+
+        <script>
+            function copyApiKey() {
+                const keyText = document.getElementById('api-key-text').innerText;
+                navigator.clipboard.writeText(keyText).then(() => {
+                    const btn = document.getElementById('copy-btn');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Tersalin!';
+                    btn.style.color = 'var(--success)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            }
+        </script>
+
         {{-- Stats Cards --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="card text-center">

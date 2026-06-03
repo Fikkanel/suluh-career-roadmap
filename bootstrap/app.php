@@ -13,12 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'admin'       => \App\Http\Middleware\IsAdmin::class,
             'mentor'      => \App\Http\Middleware\IsMentor::class,
             'institution' => \App\Http\Middleware\IsInstitution::class,
             'basic.auth'  => \App\Http\Middleware\BasicAuth::class,
             'api.key'     => \App\Http\Middleware\ApiKeyAuth::class,
+            'onboarded'   => \App\Http\Middleware\EnsureOnboardingCompleted::class,
+            'assessed'    => \App\Http\Middleware\EnsureAssessmentCompleted::class,
         ]);
 
         $middleware->api(remove: [

@@ -43,7 +43,7 @@ class ContextScoreDynamicTest extends TestCase
 
     public function test_skill_status_updated_event_updates_context_score(): void
     {
-        $user = User::factory()->create([
+        $user = User::factory()->withoutOnboarding()->create([
             'work_experience'       => 'none',
             'exploration_readiness' => 'cautious',
         ]);
@@ -61,7 +61,7 @@ class ContextScoreDynamicTest extends TestCase
 
     public function test_user_logged_in_event_updates_context_score(): void
     {
-        $user = User::factory()->create([
+        $user = User::factory()->withoutOnboarding()->create([
             'work_experience' => 'none',
         ]);
 
@@ -76,7 +76,7 @@ class ContextScoreDynamicTest extends TestCase
 
     public function test_multiple_logins_accumulate(): void
     {
-        $user = User::factory()->create(['work_experience' => 'none']);
+        $user = User::factory()->withoutOnboarding()->create(['work_experience' => 'none']);
         $listener = new UpdateContextScoreFromLogin(new ContextScoreService());
 
         for ($i = 0; $i < 3; $i++) {
@@ -89,7 +89,7 @@ class ContextScoreDynamicTest extends TestCase
 
     public function test_multiple_skill_updates_accumulate(): void
     {
-        $user = User::factory()->create(['work_experience' => 'none']);
+        $user = User::factory()->withoutOnboarding()->create(['work_experience' => 'none']);
         $career = Career::factory()->create();
         $skill1 = Skill::factory()->create(['career_id' => $career->id]);
         $skill2 = Skill::factory()->create(['career_id' => $career->id]);
@@ -105,7 +105,7 @@ class ContextScoreDynamicTest extends TestCase
 
     public function test_behavior_signals_affect_score(): void
     {
-        $user = User::factory()->create(['work_experience' => 'none']);
+        $user = User::factory()->withoutOnboarding()->create(['work_experience' => 'none']);
         $listener = new UpdateContextScoreFromLogin(new ContextScoreService());
 
         // 5+ logins should add +3 to score

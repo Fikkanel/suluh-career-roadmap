@@ -68,6 +68,9 @@ class PivotController extends Controller
 
             $user->update(['current_career_id' => null]);
 
+            // Hapus cache narasi LLM agar kuesioner dan rekomendasi berikutnya segar
+            \App\Models\LlmNarrativeCache::where('user_id', $user->id)->delete();
+
             $this->llm->generate($user->id, 'pivot_transfer', [
                 'from_career'       => $career->name,
                 'completed_skills'  => $completedSkills,

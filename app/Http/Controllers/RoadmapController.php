@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Repositories\Eloquent\ProgressRepository;
+use App\Services\LLMNarrativeService;
 
 class RoadmapController extends Controller
 {
     public function __construct(
         private readonly ProgressRepository $progressRepo,
+        private readonly LLMNarrativeService $llm,
     ) {}
 
     public function index()
@@ -17,7 +19,7 @@ class RoadmapController extends Controller
         $career = $user->currentCareer;
 
         if (! $career) {
-            return redirect()->route('assessment')
+            return redirect()->route('assessment.result')
                 ->with('info', 'Pilih karir dulu sebelum melihat roadmap.');
         }
 
@@ -68,12 +70,25 @@ class RoadmapController extends Controller
             $targetValues[$label] = 100;
         }
 
+        $completedSkills = $allProgress->where('status', 'done')->count();
+        $totalSkills     = $allProgress->count();
+        $crs             = $totalSkills > 0 ? (int) round($completedSkills / $totalSkills * 100) : 0;
+
+        $guidance = $this->llm->generate($user->id, 'roadmap_guidance', [
+            'career'           => $career->name,
+            'crs'              => $crs,
+            'completed_skills' => $completedSkills,
+            'total_skills'     => $totalSkills,
+            'major'            => $user->major ?? 'Umum',
+        ]);
+
         return view('app.roadmap', [
             'career'       => $career->name,
             'stages'       => $stages,
             'dimensions'   => $dimensions,
             'userValues'   => $userValues,
             'targetValues' => $targetValues,
+            'guidance'     => $guidance,
         ]);
     }
 }

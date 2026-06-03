@@ -43,13 +43,15 @@ return [
 
     'gemini' => [
         'api_key'  => env('GEMINI_API_KEY'),
-        'endpoint' => env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'),
+        'api_keys' => array_filter(explode(',', env('GEMINI_API_KEYS', env('GEMINI_API_KEY')))),
+        'endpoint' => env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'),
     ],
 
     'groq' => [
         'api_key'  => env('GROQ_API_KEY'),
-        'endpoint' => 'https://api.groq.com/openai/v1/chat/completions',
-        'model'    => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'api_keys' => array_filter(explode(',', env('GROQ_API_KEYS', env('GROQ_API_KEY')))),
+        'endpoint' => env('GROQ_ENDPOINT', 'https://api.groq.com/openai/v1/chat/completions'),
+        'model'    => env('GROQ_MODEL', 'meta-llama/llama-4-scout-17b-16e-instruct'),
     ],
 
     'api' => [

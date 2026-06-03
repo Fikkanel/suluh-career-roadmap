@@ -13,6 +13,14 @@
                 </div>
             </div>
         @endif
+        @if(!empty($guidance))
+            <div class="card card-accent-left mb-6" style="background:var(--accent-soft);border-left-color:var(--accent);">
+                <p class="text-sm font-semibold mb-1" style="color:var(--accent);">🧭 Pengarahan AI Pembimbing:</p>
+                <p class="text-sm" style="color:var(--fg);line-height:1.65;">
+                    {{ $guidance }}
+                </p>
+            </div>
+        @endif
 
         <div class="mb-6" id="main-progress">
             <p class="text-sm mb-2" style="color:var(--muted);">
@@ -68,6 +76,8 @@
         const mainProgressText = mainProgressContainer ? mainProgressContainer.querySelector('.flex.justify-between span:last-child') : null;
         const mainProgressFill = mainProgressContainer ? mainProgressContainer.querySelector('.progress-fill') : null;
 
+        const btnSubmit = document.getElementById('btn-submit');
+
         function updateProgress() {
             let answered = 0;
             
@@ -101,6 +111,18 @@
                     mainProgressFill.classList.add('progress-fill-success');
                 } else {
                     mainProgressFill.classList.remove('progress-fill-success');
+                }
+            }
+
+            if (btnSubmit) {
+                if (answered === totalQuestions) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.style.opacity = '1';
+                    btnSubmit.style.cursor = 'pointer';
+                } else {
+                    btnSubmit.disabled = true;
+                    btnSubmit.style.opacity = '0.5';
+                    btnSubmit.style.cursor = 'not-allowed';
                 }
             }
         }

@@ -5,6 +5,7 @@
     'cautions'     => [],
     'detailUrl'    => '#',
     'variant'      => 'balanced',
+    'isMajorMatch' => null,
 ])
 
 {{--
@@ -17,9 +18,18 @@
 
     {{-- Header: name + match % --}}
     <div class="mb-3">
-        <h3 class="font-semibold mb-2" style="font-size:1rem;line-height:1.35;margin:0;">
-            {{ is_array($career) ? ($career['name'] ?? '') : $career->name }}
-        </h3>
+        <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-semibold" style="font-size:1rem;line-height:1.35;margin:0;">
+                {{ is_array($career) ? ($career['name'] ?? '') : $career->name }}
+            </h3>
+            @if($isMajorMatch !== null)
+                @if($isMajorMatch)
+                    <span class="badge badge-success shrink-0" style="font-size:0.65rem;padding:0.15rem 0.4rem;line-height:1;">Sesuai Jurusan</span>
+                @else
+                    <span class="badge badge-warning shrink-0" style="font-size:0.65rem;padding:0.15rem 0.4rem;line-height:1;">Transisi Karir</span>
+                @endif
+            @endif
+        </div>
         @if($matchPercent !== null)
             <div>
                 <div class="flex items-center justify-between mb-1">

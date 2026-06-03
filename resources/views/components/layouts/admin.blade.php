@@ -11,7 +11,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-dvh flex" style="background:var(--bg);color:var(--fg);">
+<body class="h-dvh flex overflow-hidden w-full" style="background:var(--bg);color:var(--fg);overflow-x:hidden;">
 
     {{-- Admin Sidebar — konsisten dengan sidebar role lain --}}
     <aside class="hidden lg:flex flex-col w-60 shrink-0 sidebar-noscroll" style="background:var(--surface);border-right:1px solid var(--border);height:100dvh;overflow-y:auto;">
@@ -34,9 +34,21 @@
                 <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                 Dashboard
             </a>
-            <a href="{{ route('admin.management') }}" class="nav-link {{ request()->routeIs('admin.management') ? 'active' : '' }}">
-                <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
-                Manajemen Konten
+            <a href="{{ route('admin.careers.index') }}" class="nav-link {{ request()->routeIs('admin.careers.*') ? 'active' : '' }}">
+                <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                Kelola Karir
+            </a>
+            <a href="{{ route('admin.questions.index') }}" class="nav-link {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}">
+                <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Kelola Asesmen
+            </a>
+            <a href="{{ route('admin.ethics.index') }}" class="nav-link {{ request()->routeIs('admin.ethics.*') ? 'active' : '' }}">
+                <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Komite Etika
+            </a>
+            <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <svg aria-hidden="true" class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Kelola Pengguna
             </a>
         </nav>
 
@@ -53,8 +65,8 @@
     </aside>
 
     {{-- Admin Content Area --}}
-    <div class="flex-1 flex flex-col min-w-0">
-        <header class="flex items-center justify-between px-6 h-14 border-b shrink-0 sticky top-0 z-30" style="background:var(--surface);border-color:var(--border);">
+    <div class="flex-1 flex flex-col min-w-0 h-dvh relative" style="overflow-x:hidden;">
+        <header class="absolute top-0 left-0 w-full flex items-center justify-between px-6 h-14 border-b shrink-0 z-30" style="background:var(--surface);border-color:var(--border);">
             <div class="flex items-center gap-3">
                 <button class="lg:hidden btn btn-ghost btn-sm" aria-label="Buka menu navigasi">
                     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -66,11 +78,18 @@
                 <span class="text-sm" style="color:var(--muted);">{{ auth()->user()?->name ?? 'Admin' }}</span>
             </div>
         </header>
-        <main class="flex-1 p-6 max-w-7xl w-full" id="main-content">
-            {{ $slot }}
-        </main>
+        
+        <div class="flex-1 overflow-y-auto w-full" id="admin-scroll-area">
+            {{-- Spacer setinggi header agar konten tidak tertutup saat awal --}}
+            <div style="height: 3.5rem; flex-shrink: 0;"></div>
+            
+            <main class="flex-1 p-6 max-w-7xl w-full mx-auto" id="main-content">
+                {{ $slot }}
+            </main>
+        </div>
     </div>
 
+    @stack('modals')
     @livewireScripts
 </body>
 </html>

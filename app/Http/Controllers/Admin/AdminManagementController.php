@@ -8,35 +8,26 @@ use Illuminate\Support\Str;
 use App\Models\Career;
 use App\Models\AssessmentQuestion;
 use App\Models\EthicsDecision;
+use App\Models\User;
 
 class AdminManagementController extends Controller
 {
-    public function index()
+    /* ── Careers Management ─────────────────────────────────────── */
+
+    public function careersIndex()
     {
         $careers = Career::withCount('skills')->orderBy('name')->get()->map(fn ($c) => [
-            'id'          => $c->id,
-            'name'        => $c->name,
-            'riasec_code' => $c->riasec_code,
-            'skills_count'=> $c->skills_count,
-            'is_active'   => $c->is_active,
+            'id'                => $c->id,
+            'name'              => $c->name,
+            'riasec_code'       => $c->riasec_code,
+            'skills_count'      => $c->skills_count,
+            'is_active'         => $c->is_active,
+            'description'       => $c->description,
+            'industry_standard' => $c->industry_standard,
         ])->toArray();
 
-        $questions = AssessmentQuestion::where('is_active', true)->orderBy('order')->get()->map(fn ($q) => [
-            'id'              => $q->id,
-            'prompt'          => $q->prompt,
-            'riasec_category' => $q->riasec_category,
-            'big_five_trait'  => $q->big_five_trait,
-            'weight'          => $q->weight,
-            'type'            => $q->type,
-            'order'           => $q->order,
-        ])->toArray();
-
-        $ethicsDecisions = EthicsDecision::orderBy('created_at', 'desc')->get();
-
-        return view('admin.management', compact('careers', 'questions', 'ethicsDecisions'));
+        return view('admin.careers', compact('careers'));
     }
-
-    /* ── Career CRUD ──────────────────────────────────────────── */
 
     public function storeCareer(Request $request)
     {
@@ -73,7 +64,22 @@ class AdminManagementController extends Controller
         return back()->with('success', 'Karir dinonaktifkan.');
     }
 
-    /* ── Question CRUD ───────────────────────────────────────── */
+    /* ── Questions Management ───────────────────────────────────── */
+
+    public function questionsIndex()
+    {
+        $questions = AssessmentQuestion::where('is_active', true)->orderBy('order')->get()->map(fn ($q) => [
+            'id'              => $q->id,
+            'prompt'          => $q->prompt,
+            'riasec_category' => $q->riasec_category,
+            'big_five_trait'  => $q->big_five_trait,
+            'weight'          => $q->weight,
+            'type'            => $q->type,
+            'order'           => $q->order,
+        ])->toArray();
+
+        return view('admin.questions', compact('questions'));
+    }
 
     public function storeQuestion(Request $request)
     {
@@ -118,7 +124,14 @@ class AdminManagementController extends Controller
         return back()->with('success', 'Pertanyaan dinonaktifkan.');
     }
 
-    /* ── Ethics Decision CRUD ───────────────────────────────────── */
+    /* ── Ethics Decisions Management ────────────────────────────── */
+
+    public function ethicsIndex()
+    {
+        $ethicsDecisions = EthicsDecision::orderBy('created_at', 'desc')->get();
+
+        return view('admin.ethics', compact('ethicsDecisions'));
+    }
 
     public function storeEthics(Request $request)
     {
@@ -142,5 +155,77 @@ class AdminManagementController extends Controller
     {
         $ethics->delete();
         return back()->with('success', 'Proposal berhasil dihapus.');
+    }
+
+    /* ── User & Mentor Moderation ───────────────────────────────── */
+
+    public function usersIndex()
+    {
+        $users = User::orderBy('name')->get()->map(fn ($u) => [
+            'id'              => $u->id,
+            'name'            => $u->name,
+            'email'           => $u->email,
+            'role'            => $u->role ?? 'user',
+            'is_admin'        => $u->is_admin,
+            'education_level' => $u->education_level,
+            'major'           => $u->major,
+        ])->toArray();
+
+        return view('admin.users', compact('users'));
+    }
+
+    public function updateUser(Request $request, User $user)
+    {
+        if ($user->is_admin) {
+            return back()->with('error', 'Anda tidak dapat mengubah peran atau status pengguna administrator.');
+        }
+
+        $data = $request->validate([
+            'role'     => 'required|in:user,mentor,institution',
+            'is_admin' => 'required|boolean',
+        ]);
+
+        $user->update($data);
+
+        return back()->with('success', 'Peran pengguna ' . $user->name . ' berhasil diperbarui.');
+    }
+
+    public function storeUser(Request $request)
+    {
+        $data = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'role'     => 'required|in:user,mentor,institution',
+            'is_admin' => 'required|boolean',
+        ]);
+
+        User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => $data['password'], // Eloquent hashes this automatically via the 'hashed' cast
+            'role'     => $data['role'],
+            'is_admin' => $data['is_admin'],
+        ]);
+
+        return back()->with([
+            'success'           => 'Akun pengguna baru berhasil dibuat!',
+            'new_user_email'    => $data['email'],
+            'new_user_password' => $data['password'],
+        ]);
+    }
+
+    public function destroyUser(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        if ($user->is_admin) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun administrator.');
+        }
+
+        $user->delete();
+        return back()->with('success', 'Akun pengguna berhasil dihapus.');
     }
 }

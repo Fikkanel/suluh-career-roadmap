@@ -56,47 +56,54 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::middleware('auth')->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+    Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message'])->name('chatbot.message');
 
-    Route::get('/assessment', [AssessmentController::class, 'show'])->name('assessment');
-    Route::post('/assessment', [AssessmentController::class, 'submit'])->name('assessment.submit');
-    Route::post('/assessment/save-draft', [AssessmentController::class, 'saveDraft'])->name('assessment.saveDraft');
-    Route::get('/assessment/result', [AssessmentController::class, 'result'])->name('assessment.result');
+    Route::middleware('onboarded')->group(function () {
+        // Assessment flow — accessible before career is chosen
+        Route::get('/assessment', [AssessmentController::class, 'show'])->name('assessment');
+        Route::post('/assessment', [AssessmentController::class, 'submit'])->name('assessment.submit');
+        Route::post('/assessment/save-draft', [AssessmentController::class, 'saveDraft'])->name('assessment.saveDraft');
+        Route::get('/assessment/result', [AssessmentController::class, 'result'])->name('assessment.result');
 
-    Route::get('/career/{id}', [CareerController::class, 'show'])->name('career.detail');
-    Route::post('/career/{id}/choose', [CareerController::class, 'choose'])->name('career.choose');
+        // All routes below require completed assessment + chosen career
+        Route::middleware('assessed')->group(function () {
+            Route::get('/career/{id}', [CareerController::class, 'show'])->name('career.detail');
+            Route::post('/career/{id}/choose', [CareerController::class, 'choose'])->name('career.choose');
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/roadmap', [RoadmapController::class, 'index'])->name('roadmap');
+            Route::get('/roadmap', [RoadmapController::class, 'index'])->name('roadmap');
 
-    Route::get('/skill-progress', [SkillProgressController::class, 'index'])->name('skill-progress');
-    Route::patch('/skill-progress/{skillId}', [SkillProgressController::class, 'update'])->name('skill-progress.update');
+            Route::get('/skill-progress', [SkillProgressController::class, 'index'])->name('skill-progress');
+            Route::patch('/skill-progress/{skillId}', [SkillProgressController::class, 'update'])->name('skill-progress.update');
 
-    // Skill Validation (FR-09)
-    Route::get('/skill/{skillId}/validate', [SkillValidationController::class, 'show'])->name('skill-validation.show');
-    Route::post('/skill/{skillId}/validate', [SkillValidationController::class, 'store'])->name('skill-validation.store');
+            // Skill Validation (FR-09)
+            Route::get('/skill/{skillId}/validate', [SkillValidationController::class, 'show'])->name('skill-validation.show');
+            Route::post('/skill/{skillId}/validate', [SkillValidationController::class, 'store'])->name('skill-validation.store');
 
-    // Impact Surveys (FR-14)
-    Route::get('/survey/{type}', [SurveyController::class, 'show'])->name('survey.show');
-    Route::post('/survey/{type}', [SurveyController::class, 'store'])->name('survey.store');
+            // Impact Surveys (FR-14)
+            Route::get('/survey/{type}', [SurveyController::class, 'show'])->name('survey.show');
+            Route::post('/survey/{type}', [SurveyController::class, 'store'])->name('survey.store');
 
-    Route::get('/pivot', [PivotController::class, 'show'])->name('pivot');
-    Route::post('/pivot', [PivotController::class, 'store'])->name('pivot.store');
+            Route::get('/pivot', [PivotController::class, 'show'])->name('pivot');
+            Route::post('/pivot', [PivotController::class, 'store'])->name('pivot.store');
 
-    Route::get('/archive', [ArchiveController::class, 'index'])->name('archive');
+            Route::get('/archive', [ArchiveController::class, 'index'])->name('archive');
 
-    Route::get('/export', [ExportController::class, 'index'])->name('export');
-    Route::post('/export/pdf', [ExportController::class, 'pdf'])->name('export.pdf');
-    Route::post('/export/json', [ExportController::class, 'json'])->name('export.json');
-    
-    // Notifications (FR-XX / Phase 2)
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications');
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+            Route::get('/export', [ExportController::class, 'index'])->name('export');
+            Route::post('/export/pdf', [ExportController::class, 'pdf'])->name('export.pdf');
+            Route::post('/export/json', [ExportController::class, 'json'])->name('export.json');
+            
+            // Notifications (FR-XX / Phase 2)
+            Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications');
+            Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
 
-    // Public Profile Settings
-    Route::get('/profile/settings', [\App\Http\Controllers\PublicProfileController::class, 'settings'])->name('profile.settings');
-    Route::post('/profile/settings', [\App\Http\Controllers\PublicProfileController::class, 'updateSettings'])->name('profile.settings.update');
-    Route::post('/profile/avatar', [\App\Http\Controllers\PublicProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+            // Public Profile Settings
+            Route::get('/profile/settings', [\App\Http\Controllers\PublicProfileController::class, 'settings'])->name('profile.settings');
+            Route::post('/profile/settings', [\App\Http\Controllers\PublicProfileController::class, 'updateSettings'])->name('profile.settings.update');
+            Route::post('/profile/avatar', [\App\Http\Controllers\PublicProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+        });
+    });
 });
 
 // Public Profile Route (Bisa diakses tanpa login)
@@ -113,7 +120,10 @@ Route::post('/ethics/{id}/vote', [\App\Http\Controllers\DataEthicsController::cl
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/management', [AdminManagementController::class, 'index'])->name('management');
+    Route::get('/careers', [AdminManagementController::class, 'careersIndex'])->name('careers.index');
+    Route::get('/questions', [AdminManagementController::class, 'questionsIndex'])->name('questions.index');
+    Route::get('/ethics', [AdminManagementController::class, 'ethicsIndex'])->name('ethics.index');
+    Route::get('/users', [AdminManagementController::class, 'usersIndex'])->name('users.index');
 
     // Career CRUD
     Route::post('/careers', [AdminManagementController::class, 'storeCareer'])->name('careers.store');
@@ -128,6 +138,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Ethics Decision CRUD
     Route::post('/ethics', [AdminManagementController::class, 'storeEthics'])->name('ethics.store');
     Route::delete('/ethics/{ethics}', [AdminManagementController::class, 'destroyEthics'])->name('ethics.destroy');
+
+    // User Management CRUD
+    Route::post('/users', [AdminManagementController::class, 'storeUser'])->name('users.store');
+    Route::put('/users/{user}', [AdminManagementController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{user}', [AdminManagementController::class, 'destroyUser'])->name('users.destroy');
 });
 
 /*
@@ -148,5 +163,7 @@ Route::middleware(['auth', 'mentor'])->prefix('mentor')->name('mentor.')->group(
 */
 Route::middleware(['auth', 'institution'])->prefix('institution')->name('institution.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Institution\InstitutionDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/api-key/generate', [\App\Http\Controllers\Institution\InstitutionDashboardController::class, 'generateApiKey'])->name('api-key.generate');
+    Route::post('/api-key/revoke', [\App\Http\Controllers\Institution\InstitutionDashboardController::class, 'revokeApiKey'])->name('api-key.revoke');
 });
 

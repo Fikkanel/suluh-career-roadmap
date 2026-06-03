@@ -19,8 +19,8 @@ class SkillValidationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
         $career = Career::factory()->create(['is_active' => true]);
+        $this->user = User::factory()->create(['current_career_id' => $career->id]);
         $this->skill = Skill::factory()->create(['career_id' => $career->id]);
     }
 

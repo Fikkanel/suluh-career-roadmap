@@ -17,7 +17,8 @@ class SurveyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
+        $career = Career::factory()->create(['is_active' => true]);
+        $this->user = User::factory()->create(['current_career_id' => $career->id]);
     }
 
     public function test_show_survey_requires_auth(): void

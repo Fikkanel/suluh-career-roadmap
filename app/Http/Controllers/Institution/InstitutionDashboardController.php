@@ -82,4 +82,24 @@ class InstitutionDashboardController extends Controller
 
         return view('institution.dashboard', $stats);
     }
+
+    public function generateApiKey()
+    {
+        $user = auth()->user();
+        
+        // Generate secure unique API key
+        $user->api_key = 'slh_inst_' . bin2hex(random_bytes(16));
+        $user->save();
+
+        return redirect()->route('institution.dashboard')->with('success', 'API Key berhasil dibuat!');
+    }
+
+    public function revokeApiKey()
+    {
+        $user = auth()->user();
+        $user->api_key = null;
+        $user->save();
+
+        return redirect()->route('institution.dashboard')->with('success', 'API Key berhasil dinonaktifkan.');
+    }
 }

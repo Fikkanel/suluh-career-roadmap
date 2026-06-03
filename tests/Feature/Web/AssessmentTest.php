@@ -123,4 +123,47 @@ class AssessmentTest extends TestCase
         ]);
         $this->assertNull(session('assessment_draft'));
     }
+
+    public function test_can_view_assessment_result_page(): void
+    {
+        $user = User::factory()->create(['major' => 'Pendidikan Guru Sekolah Dasar']);
+        
+        $result = \App\Models\AssessmentResult::create([
+            'user_id' => $user->id,
+            'riasec_scores' => ['R' => 50, 'I' => 30, 'A' => 40, 'S' => 80, 'E' => 60, 'C' => 50],
+            'big_five_scores' => ['Openness' => 70, 'Conscientiousness' => 80, 'Extraversion' => 60, 'Agreeableness' => 75, 'Neuroticism' => 40],
+            'top_career_ids' => [1],
+        ]);
+
+        $this->mock(\App\Services\LLMNarrativeService::class, function ($mock) {
+            $mock->shouldReceive('generate')
+                ->andReturn(json_encode([
+                    'narrative' => 'Arah ini muncul berdasarkan pola jawabanmu. Kamu tetap memegang keputusan akhirnya.',
+                    'careers' => [
+                        [
+                            'name' => 'Konsultan Pendidikan',
+                            'description' => 'Membantu lembaga pendidikan dalam meningkatkan kualitas kurikulum dan metode pengajaran.',
+                            'riasec_code' => 'SAE',
+                            'industry_standard' => 'Pendidikan',
+                            'match_percent' => 90,
+                            'reasons' => [
+                                'Menyelaraskan kemampuan mengajar dengan rancangan program belajar.',
+                                'Sesuai dengan skor minat Sosial yang tinggi.'
+                            ],
+                            'cautions' => [],
+                            'is_major_match' => true,
+                            'skills' => [
+                                ['name' => 'Manajemen Kelas & Kondusivitas', 'level' => 'beginner', 'estimated_hours' => 20, 'order' => 1]
+                            ]
+                        ]
+                    ]
+                ]));
+        });
+
+        $response = $this->actingAs($user)->get(route('assessment.result'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Rekomendasi Karir Terkunci Untukmu');
+        $response->assertSee('Konsultan Pendidikan');
+    }
 }

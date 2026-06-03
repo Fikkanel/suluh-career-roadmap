@@ -83,11 +83,12 @@ class ScoringService
      * Each career's RIASEC code (e.g. "IRA") is decoded into a weighted vector:
      * 1st letter = 3pts, 2nd = 2pts, 3rd = 1pt.
      */
-    public function getTopCareers(array $riasecScores, int $limit = 3): array
+    public function getTopCareers(array $riasecScores, int $limit = 3, ?string $major = null): array
     {
         $careers = Career::where('is_active', true)->with('skills')->get();
+        $majorLower = $major ? strtolower(trim($major)) : '';
 
-        $scored = $careers->map(function (Career $career) use ($riasecScores) {
+        $scored = $careers->map(function (Career $career) use ($riasecScores, $majorLower) {
             $careerVector = $this->riasecCodeToVector($career->riasec_code);
             $dotProduct   = 0.0;
             $careerNorm   = 0.0;
@@ -104,14 +105,19 @@ class ScoringService
             $similarity = $denom > 0 ? $dotProduct / $denom : 0;
             $matchPercent = (int) round(min(100, max(0, $similarity * 100)));
 
+            $majorMatchBonus = $this->calculateMajorMatchBonus($career, $majorLower);
+            $totalScore = $matchPercent + $majorMatchBonus;
+
             return [
                 'career'       => $career,
                 'match_percent'=> $matchPercent,
+                'total_score'  => $totalScore,
+                'is_major_match' => ($majorMatchBonus >= 40),
             ];
         });
 
         return $scored
-            ->sortByDesc('match_percent')
+            ->sortByDesc('total_score')
             ->take($limit)
             ->map(fn ($item) => [
                 'id'           => $item['career']->id,
@@ -122,6 +128,7 @@ class ScoringService
                 'matchPercent' => $item['match_percent'],
                 'reasons'      => $this->buildReasons($item['career'], $riasecScores),
                 'cautions'     => [],
+                'is_major_match' => $item['is_major_match'],
             ])
             ->values()
             ->toArray();
@@ -168,6 +175,147 @@ class ScoringService
             $reasons[] = 'Pola jawaban asesmen kamu selaras dengan kebutuhan karir ini';
         }
         return $reasons;
+    }
+
+    /**
+     * Get a single locked career based on RIASEC score matching and the user's major.
+     */
+    public function getLockedCareer(array $riasecScores, ?string $major): array
+    {
+        $careers = Career::where('is_active', true)->with('skills')->get();
+        $majorLower = $major ? strtolower(trim($major)) : '';
+
+        $scored = $careers->map(function (Career $career) use ($riasecScores, $majorLower) {
+            $careerVector = $this->riasecCodeToVector($career->riasec_code);
+            $dotProduct   = 0.0;
+            $careerNorm   = 0.0;
+            $userNorm     = 0.0;
+
+            foreach ($careerVector as $letter => $weight) {
+                $userScore   = $riasecScores[$letter] ?? 0;
+                $dotProduct += $userScore * $weight;
+                $careerNorm += $weight ** 2;
+                $userNorm   += $userScore ** 2;
+            }
+
+            $denom = sqrt($careerNorm) * sqrt($userNorm);
+            $similarity = $denom > 0 ? $dotProduct / $denom : 0;
+            $matchPercent = (int) round(min(100, max(0, $similarity * 100)));
+
+            $majorMatchBonus = $this->calculateMajorMatchBonus($career, $majorLower);
+            $totalScore = $matchPercent + $majorMatchBonus;
+
+            return [
+                'career'       => $career,
+                'match_percent'=> $matchPercent,
+                'total_score'  => $totalScore,
+            ];
+        });
+
+        // Get the single top career based on total score
+        $best = $scored->sortByDesc('total_score')->first();
+
+        if (!$best) {
+            $fallbackCareer = Career::where('is_active', true)->first();
+            if (!$fallbackCareer) {
+                return [];
+            }
+            return [
+                'id'           => $fallbackCareer->id,
+                'name'         => $fallbackCareer->name,
+                'description'  => $fallbackCareer->description,
+                'riasec_code'  => $fallbackCareer->riasec_code,
+                'industry_standard' => $fallbackCareer->industry_standard,
+                'matchPercent' => 100,
+                'reasons'      => ['Karir default terpilih'],
+                'cautions'     => [],
+                'is_major_match' => false,
+            ];
+        }
+
+        $career = $best['career'];
+        $majorMatchBonus = $this->calculateMajorMatchBonus($career, $majorLower);
+        return [
+            'id'           => $career->id,
+            'name'         => $career->name,
+            'description'  => $career->description,
+            'riasec_code'  => $career->riasec_code,
+            'industry_standard' => $career->industry_standard,
+            'matchPercent' => $best['match_percent'],
+            'reasons'      => $this->buildReasons($career, $riasecScores),
+            'cautions'     => [],
+            'is_major_match' => ($majorMatchBonus >= 40),
+        ];
+    }
+
+    private function calculateMajorMatchBonus(Career $career, string $majorLower): int
+    {
+        $majorMatchBonus = 0;
+        if ($majorLower !== '') {
+            $matchesMajor = false;
+            $careerSlug = $career->slug;
+
+            if ($careerSlug === 'software-engineer') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['informatika', 'komputer', 'ti', 'software', 'perangkat lunak', 'rpl', 'it', 'web', 'programmer', 'development']);
+            } elseif ($careerSlug === 'ux-designer') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['desain', 'dkv', 'seni', 'visual', 'grafis', 'ux', 'ui', 'psikologi', 'interaksi', 'interaction']);
+            } elseif ($careerSlug === 'data-analyst') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['data', 'statistika', 'matematika', 'analyst', 'sains data', 'akuntansi', 'keuangan', 'finance', 'aktuaria', 'ekonomi']);
+            } elseif ($careerSlug === 'digital-marketer') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['marketing', 'pemasaran', 'komunikasi', 'humas', 'pr', 'bisnis', 'manajemen', 'periklanan', 'advertising']);
+            } elseif ($careerSlug === 'product-manager') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['manajemen', 'bisnis', 'proyek', 'project', 'sistem informasi', 'si', 'it', 'komputer', 'informatika']);
+            } elseif ($careerSlug === 'cybersecurity-analyst') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['keamanan', 'cyber', 'cybersecurity', 'jaringan', 'network', 'komputer', 'it', 'informatika', 'sistem komputer']);
+            } elseif ($careerSlug === 'business-analyst') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['bisnis', 'ekonomi', 'manajemen', 'akuntansi', 'finance', 'keuangan', 'analyst', 'sistem informasi', 'si']);
+            } elseif ($careerSlug === 'cloud-engineer') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['cloud', 'jaringan', 'network', 'infrastruktur', 'komputer', 'it', 'informatika', 'sistem komputer']);
+            } elseif ($careerSlug === 'guru-sd') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['pgsd', 'pendidikan', 'guru', 'paud', 'tarbiyah', 'keguruan', 'pembelajaran']);
+            } elseif ($careerSlug === 'guru-bimbel') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['pendidikan', 'guru', 'paud', 'tarbiyah', 'keguruan', 'sastra', 'bahasa', 'matematika', 'fisika', 'kimia', 'biologi', 'sejarah', 'geografi']);
+            } elseif ($careerSlug === 'penulis-parenting') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['psikologi', 'sastra', 'bahasa', 'komunikasi', 'pendidikan', 'guru', 'jurnalistik', 'humas', 'parenting']);
+            } elseif ($careerSlug === 'pns-adm') {
+                $matchesMajor = $this->hasAnyKeyword($majorLower, ['administrasi', 'pemerintahan', 'hukum', 'politik', 'sosial', 'manajemen', 'ekonomi', 'kebijakan']);
+            }
+
+            if ($matchesMajor) {
+                $majorMatchBonus = 40; // Direct major match
+            } else {
+                // Stricter alignment logic for transition/pivot candidates
+                $isItStemMajor = $this->hasAnyKeyword($majorLower, ['informatika', 'komputer', 'ti', 'software', 'perangkat lunak', 'rpl', 'it', 'web', 'programmer', 'development', 'data', 'statistika', 'matematika', 'sains data', 'teknik', 'engineering', 'sistem informasi', 'si', 'aktuaria']);
+                
+                // Technical barrier penalty for non-IT/STEM majors targeting heavy technical roles
+                if (in_array($careerSlug, ['software-engineer', 'cloud-engineer', 'cybersecurity-analyst']) && !$isItStemMajor) {
+                    $majorMatchBonus = -30;
+                }
+                
+                // Creative/humanist boost for creative/social digital careers (UX Designer, Digital Marketer)
+                $isHumanistCreativeMajor = $this->hasAnyKeyword($majorLower, ['pendidikan', 'guru', 'pgsd', 'seni', 'desain', 'visual', 'dkv', 'komunikasi', 'humas', 'pr', 'sastra', 'bahasa', 'psikologi', 'sosial', 'sejarah', 'filsafat', 'hubungan internasional', 'hi']);
+                if (in_array($careerSlug, ['ux-designer', 'digital-marketer']) && $isHumanistCreativeMajor) {
+                    $majorMatchBonus = 20;
+                }
+
+                // Strategic management boost for Product Manager or Business Analyst
+                $isManagementStrategicMajor = $this->hasAnyKeyword($majorLower, ['manajemen', 'bisnis', 'ekonomi', 'pendidikan', 'guru', 'pgsd', 'akuntansi', 'finance', 'keuangan', 'administrasi']);
+                if (in_array($careerSlug, ['product-manager', 'business-analyst']) && $isManagementStrategicMajor && $majorMatchBonus === 0) {
+                    $majorMatchBonus = 15;
+                }
+            }
+        }
+        return $majorMatchBonus;
+    }
+
+    private function hasAnyKeyword(string $text, array $keywords): bool
+    {
+        foreach ($keywords as $keyword) {
+            if (str_contains($text, $keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

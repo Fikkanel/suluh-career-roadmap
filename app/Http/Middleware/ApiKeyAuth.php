@@ -11,9 +11,22 @@ class ApiKeyAuth
     public function handle(Request $request, Closure $next): Response
     {
         $key = $request->header('X-API-KEY');
-        $validKey = config('services.api.key');
+        if (! $key) {
+            return response()->json(['message' => 'API Key tidak valid.'], 401);
+        }
 
-        if (! $key || $key !== $validKey) {
+        $validMasterKey = config('services.api.key');
+        if ($key === $validMasterKey) {
+            return $next($request);
+        }
+
+        // Check if it is a valid API key registered to a university/institution partner
+        $isValidInstitutionKey = \App\Models\User::where('role', 'institution')
+            ->whereNotNull('api_key')
+            ->where('api_key', $key)
+            ->exists();
+
+        if (! $isValidInstitutionKey) {
             return response()->json(['message' => 'API Key tidak valid.'], 401);
         }
 

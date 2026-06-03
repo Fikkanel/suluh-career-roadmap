@@ -51,20 +51,19 @@ class CopyComplianceTest extends TestCase
         }
     }
 
-    public function test_onboarding_fields_are_optional(): void
+    public function test_onboarding_fields_are_required(): void
     {
-        // Constitution P2: data minimization — all onboarding fields optional
         $user = \App\Models\User::factory()->create();
         $response = $this->actingAs($user)->get('/onboarding');
         $response->assertStatus(200);
-        $response->assertSee('opsional');
-        $response->assertSee('melewatinya');
+        $response->assertSee('wajib');
+        $response->assertDontSee('opsional');
     }
 
     public function test_skill_validation_no_pass_fail_language(): void
     {
-        $user = \App\Models\User::factory()->create();
         $career = \App\Models\Career::factory()->create(['is_active' => true]);
+        $user = \App\Models\User::factory()->create(['current_career_id' => $career->id]);
         $skill = \App\Models\Skill::factory()->create(['career_id' => $career->id]);
 
         $response = $this->actingAs($user)->get("/skill/{$skill->id}/validate");
@@ -103,7 +102,8 @@ class CopyComplianceTest extends TestCase
 
     public function test_survey_transparency_statement(): void
     {
-        $user = \App\Models\User::factory()->create();
+        $career = \App\Models\Career::factory()->create(['is_active' => true]);
+        $user = \App\Models\User::factory()->create(['current_career_id' => $career->id]);
         \App\Models\ImpactSurvey::create(['user_id' => $user->id, 'type' => '3_months']);
 
         $response = $this->actingAs($user)->get('/survey/3_months');

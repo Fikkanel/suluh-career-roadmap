@@ -11,6 +11,15 @@
                 :targetValues="$targetValues" />
         </div>
 
+        @if(!empty($guidance))
+            <div class="card card-accent-left mb-8" style="background:var(--accent-soft);border-left-color:var(--accent);">
+                <p class="text-sm font-semibold mb-1" style="color:var(--accent);">🧭 Arahan Pembimbing AI:</p>
+                <p class="text-sm" style="color:var(--fg);line-height:1.65;">
+                    {{ $guidance }}
+                </p>
+            </div>
+        @endif
+
         {{-- Roadmap Stages --}}
         <h2 class="font-semibold mb-4">Tahapan Roadmap</h2>
         <div class="flex flex-col gap-4">

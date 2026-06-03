@@ -26,9 +26,11 @@ class DashboardController extends Controller
         
         $career = $user->currentCareer;
 
+        // The 'assessed' middleware guarantees $career exists for regular users.
+        // This fallback is a safety net only.
         if (! $career) {
-            return redirect()->route('assessment')
-                ->with('info', 'Lengkapi asesmen untuk membuka dashboard personalisasimu.');
+            return redirect()->route('assessment.result')
+                ->with('info', 'Pilih karir dari hasil asesmen untuk melanjutkan.');
         }
 
         $crs             = $this->progressRepo->calculateCrs($user->id, $career->id);
@@ -56,27 +58,44 @@ class DashboardController extends Controller
             }
         }
 
-        // Generate Dummy Job Recommendations (Fase 2 MVP)
+        // Generate Job Recommendations using cooperative AI
         $jobs = [];
-        if ($crs >= 15) { // Hanya tampilkan jika sudah ada progres
-            $jobs = [
-                [
-                    'title' => 'Junior ' . $career->name,
-                    'company' => 'TechCorp Indonesia',
-                    'location' => 'Jakarta Selatan (Hybrid)',
-                    'salary' => 'Rp 6.000.000 - Rp 8.000.000',
-                    'match' => min(95, $crs + 15) . '%',
-                    'source' => 'Glints'
-                ],
-                [
-                    'title' => $career->name . ' Intern',
-                    'company' => 'StartupJuara',
-                    'location' => 'Remote',
-                    'salary' => 'Rp 3.000.000 - Rp 4.500.000',
-                    'match' => min(98, $crs + 25) . '%',
-                    'source' => 'Jobstreet'
-                ]
-            ];
+        if ($crs >= 15) {
+            $jobsJson = $this->llm->generate($user->id, 'job_recommendations', [
+                'career'   => $career->name,
+                'province' => $user->province ?? 'DKI Jakarta',
+                'crs'      => $crs,
+            ]);
+
+            try {
+                $jobs = json_decode($jobsJson, true);
+                if (!is_array($jobs)) {
+                    $jobs = [];
+                }
+            } catch (\Throwable $e) {
+                $jobs = [];
+            }
+
+            if (empty($jobs)) {
+                $jobs = [
+                    [
+                        'title' => 'Junior ' . $career->name,
+                        'company' => 'Perusahaan Mitra Suluh',
+                        'location' => $user->province ?? 'Jakarta',
+                        'salary' => 'Rp 6.000.000 - Rp 8.000.000',
+                        'match' => min(95, $crs + 15) . '%',
+                        'source' => 'Suluh Network'
+                    ],
+                    [
+                        'title' => $career->name . ' Magang',
+                        'company' => 'Startup Lokal',
+                        'location' => 'Remote',
+                        'salary' => 'Rp 3.000.000 - Rp 4.500.000',
+                        'match' => min(98, $crs + 25) . '%',
+                        'source' => 'Suluh Network'
+                    ]
+                ];
+            }
         }
 
         // Mentor Feedbacks

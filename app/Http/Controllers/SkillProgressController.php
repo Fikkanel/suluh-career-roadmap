@@ -19,7 +19,7 @@ class SkillProgressController extends Controller
         $career = $user->currentCareer;
 
         if (! $career) {
-            return redirect()->route('assessment');
+            return redirect()->route('assessment.result');
         }
 
         $progressRows = $this->progressRepo->getByUser($user->id);

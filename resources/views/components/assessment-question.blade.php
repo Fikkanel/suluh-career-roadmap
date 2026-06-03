@@ -36,6 +36,7 @@
                                name="answers[{{ $questionId }}]"
                                value="{{ $key }}"
                                {{ $selectedOption == $key ? 'checked' : '' }}
+                               required
                                class="mt-0.5 accent-green-700"
                                wire:model.live="answers.{{ $questionId }}">
                         <span class="text-sm">{{ $label }}</span>
@@ -52,6 +53,7 @@
                                    name="answers[{{ $questionId }}]"
                                    value="{{ $i }}"
                                    {{ $selectedOption == $i ? 'checked' : '' }}
+                                   required
                                    wire:model.live="answers.{{ $questionId }}">
                             <span class="text-sm font-mono">{{ $i }}</span>
                         </label>
@@ -65,6 +67,7 @@
                           rows="4"
                           class="input"
                           placeholder="Tuliskan refleksimu di sini..."
+                          required
                           wire:model.debounce.500ms="answers.{{ $questionId }}">{{ $selectedOption }}</textarea>
                 <p class="helper-text">Tidak ada jawaban benar atau salah. Tuliskan apa yang terlintas.</p>
             </div>

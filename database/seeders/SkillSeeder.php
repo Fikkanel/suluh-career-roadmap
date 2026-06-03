@@ -85,6 +85,34 @@ class SkillSeeder extends Seeder
                 ['name' => 'CI/CD Pipeline',                   'level' => 'advanced',     'estimated_hours' => 35, 'order' => 6],
                 ['name' => 'Keamanan & Kepatuhan Cloud',        'level' => 'advanced',     'estimated_hours' => 40, 'order' => 7],
             ],
+            'guru-sd' => [
+                ['name' => 'Manajemen Kelas & Kondusivitas',       'level' => 'beginner',     'estimated_hours' => 20, 'order' => 1],
+                ['name' => 'Pengembangan Kurikulum & RPP',         'level' => 'beginner',     'estimated_hours' => 25, 'order' => 2],
+                ['name' => 'Psikologi Perkembangan Anak SD',       'level' => 'intermediate', 'estimated_hours' => 30, 'order' => 3],
+                ['name' => 'Penilaian & Evaluasi Pembelajaran',    'level' => 'intermediate', 'estimated_hours' => 25, 'order' => 4],
+                ['name' => 'Media & Alat Peraga Pembelajaran Kreatif', 'level' => 'intermediate', 'estimated_hours' => 30, 'order' => 5],
+                ['name' => 'Konseling Siswa & Hubungan Wali Murid', 'level' => 'advanced',     'estimated_hours' => 35, 'order' => 6],
+            ],
+            'guru-bimbel' => [
+                ['name' => 'Teknik Mengajar Interaktif & Seru',    'level' => 'beginner',     'estimated_hours' => 15, 'order' => 1],
+                ['name' => 'Pemahaman Kurikulum & Bank Soal',       'level' => 'beginner',     'estimated_hours' => 20, 'order' => 2],
+                ['name' => 'Diagnosis Kesulitan Belajar Siswa',     'level' => 'intermediate', 'estimated_hours' => 25, 'order' => 3],
+                ['name' => 'Penyusunan Modul & Ringkasan Cepat',   'level' => 'intermediate', 'estimated_hours' => 30, 'order' => 4],
+                ['name' => 'Komunikasi Persuasif & Motivasi Belajar', 'level' => 'advanced',   'estimated_hours' => 35, 'order' => 5],
+            ],
+            'penulis-parenting' => [
+                ['name' => 'Keterampilan Menulis Kreatif & Edukatif', 'level' => 'beginner',   'estimated_hours' => 20, 'order' => 1],
+                ['name' => 'Riset & Teori Psikologi Ibu-Anak',      'level' => 'beginner',     'estimated_hours' => 25, 'order' => 2],
+                ['name' => 'Copywriting & Content Creation Media',  'level' => 'intermediate', 'estimated_hours' => 30, 'order' => 3],
+                ['name' => 'Strategi Publikasi Buku & Kerja Penerbit', 'level' => 'advanced',   'estimated_hours' => 35, 'order' => 4],
+            ],
+            'pns-adm' => [
+                ['name' => 'Tata Kelola Administrasi & Kearsipan',  'level' => 'beginner',     'estimated_hours' => 15, 'order' => 1],
+                ['name' => 'Penyusunan Surat Dinas & Notulensi',    'level' => 'beginner',     'estimated_hours' => 20, 'order' => 2],
+                ['name' => 'Regulasi Pemerintah & Kebijakan Publik', 'level' => 'intermediate', 'estimated_hours' => 30, 'order' => 3],
+                ['name' => 'Pelayanan Prima & Public Speaking',     'level' => 'intermediate', 'estimated_hours' => 25, 'order' => 4],
+                ['name' => 'Manajemen Keuangan Instansi Dasar',      'level' => 'advanced',     'estimated_hours' => 35, 'order' => 5],
+            ],
         ];
 
         foreach ($skills as $slug => $careerSkills) {

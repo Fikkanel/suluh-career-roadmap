@@ -30,6 +30,13 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'age_range'             => '18-22',
+            'education_level'       => 's1_ongoing',
+            'major'                 => 'Teknik Informatika',
+            'work_experience'       => 'none',
+            'province'              => 'DKI Jakarta',
+            'exploration_readiness' => 'comfortable',
+            'support_level'         => 'moderate',
         ];
     }
 
@@ -40,6 +47,19 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function withoutOnboarding(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'age_range'             => null,
+            'education_level'       => null,
+            'major'                 => null,
+            'work_experience'       => null,
+            'province'              => null,
+            'exploration_readiness' => null,
+            'support_level'         => null,
         ]);
     }
 
@@ -69,6 +89,7 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'age_range'             => '18-22',
             'education_level'       => 's1_ongoing',
+            'major'                 => 'Teknik Informatika',
             'work_experience'       => 'none',
             'province'              => 'DKI Jakarta',
             'exploration_readiness' => 'comfortable',
