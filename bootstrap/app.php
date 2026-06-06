@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\PreventWebAccessFromApiDomain::class,
+        ]);
         $middleware->alias([
             'admin'       => \App\Http\Middleware\IsAdmin::class,
             'mentor'      => \App\Http\Middleware\IsMentor::class,
