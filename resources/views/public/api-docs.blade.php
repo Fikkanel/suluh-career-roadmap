@@ -1,3 +1,15 @@
+@php
+    $currentHost = request()->getHost();
+    $scheme = request()->isSecure() ? 'https://' : 'http://';
+    $port = request()->getPort();
+    $portStr = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
+
+    if (str_starts_with($currentHost, 'api.')) {
+        $apiBaseUrl = $scheme . $currentHost . $portStr . '/api/v1';
+    } else {
+        $apiBaseUrl = $scheme . 'api.' . $currentHost . $portStr . '/api/v1';
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -116,7 +128,7 @@
         {{-- Base URL --}}
         <div class="card mb-8">
             <h2 class="font-semibold text-sm mb-2">📍 Base URL</h2>
-            <div class="code-block">{{ url('api/v1') }}</div>
+            <div class="code-block">{{ $apiBaseUrl }}</div>
         </div>
 
         {{-- Endpoints --}}
@@ -204,7 +216,7 @@
         <div class="endpoint-card" id="card-{{ $i }}">
             <div class="endpoint-header" onclick="toggleEndpoint({{ $i }})">
                 <span class="method-badge">{{ $ep['method'] }}</span>
-                <code class="mono text-sm font-medium flex-1">{{ url('api/v1') }}{{ $ep['path'] }}</code>
+                <code class="mono text-sm font-medium flex-1">{{ $apiBaseUrl }}{{ $ep['path'] }}</code>
                 <span class="text-sm" style="color:var(--muted);">{{ $ep['title'] }}</span>
                 <svg class="chevron" id="chevron-{{ $i }}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
@@ -212,13 +224,13 @@
                 <p class="text-sm mb-4" style="color:var(--muted); line-height:1.7;">{{ $ep['desc'] }}</p>
 
                 <p class="text-xs font-semibold mb-1" style="color:var(--muted);">CONTOH REQUEST</p>
-                <div class="code-block">curl -X GET "{{ url('api/v1') }}{{ $ep['path'] }}" \
+                <div class="code-block">curl -X GET "{{ $apiBaseUrl }}{{ $ep['path'] }}" \
   -H "X-API-KEY: suluh-api-key-2024" \
   -H "Accept: application/json"</div>
 
                 <div class="flex items-center justify-between mt-4 mb-1">
                     <p class="text-xs font-semibold" style="color:var(--muted);">CONTOH RESPONS</p>
-                    <button class="try-btn" onclick="tryEndpoint({{ $i }}, '{{ url('api/v1') }}{{ $ep['path'] }}')">
+                    <button class="try-btn" onclick="tryEndpoint({{ $i }}, '{{ $apiBaseUrl }}{{ $ep['path'] }}')">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         Coba Sekarang
                     </button>
