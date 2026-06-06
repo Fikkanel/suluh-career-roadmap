@@ -98,8 +98,8 @@ class InstitutionDashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Generate secure unique API key
-        $user->api_key = 'slh_inst_' . bin2hex(random_bytes(16));
+        // Generate secure unique API key (prefix + 32 chars random alphanumeric combination)
+        $user->api_key = 'slh_inst_' . \Illuminate\Support\Str::random(32);
         $user->save();
 
         return redirect()->route('institution.dashboard')->with('success', 'API Key berhasil dibuat!');
