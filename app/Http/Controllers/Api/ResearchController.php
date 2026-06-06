@@ -9,6 +9,7 @@ use App\Models\RoadmapArchive;
 use App\Models\AssessmentResult;
 use App\Models\Career;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 /**
  * API Publik untuk Peneliti Akademik (Fase 3).
@@ -20,25 +21,53 @@ use Illuminate\Support\Facades\Cache;
  */
 class ResearchController extends Controller
 {
+    private function getRequestInstitution(Request $request)
+    {
+        $key = $request->header('X-API-KEY');
+        if (!$key) {
+            return null;
+        }
+
+        return User::where('role', 'institution')
+            ->whereNotNull('api_key')
+            ->where('api_key', $key)
+            ->first();
+    }
+
     /**
      * GET /api/v1/research/summary
      * Ringkasan statistik platform secara keseluruhan.
      */
-    public function summary()
+    public function summary(Request $request)
     {
-        $data = Cache::remember('research.summary', 3600, function () {
-            $totalUsers  = User::where('is_admin', false)->count();
-            $activeUsers = User::where('is_admin', false)
+        $institution = $this->getRequestInstitution($request);
+        $institutionName = $institution ? $institution->name : null;
+        $cacheKey = $institution ? 'research.summary.' . $institution->id : 'research.summary';
+
+        $data = Cache::remember($cacheKey, 3600, function () use ($institutionName) {
+            $usersQuery = User::where('is_admin', false);
+            if ($institutionName) {
+                $usersQuery->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))]);
+            }
+
+            $totalUsers  = (clone $usersQuery)->count();
+            $activeUsers = (clone $usersQuery)
                 ->where('updated_at', '>=', now()->subDays(30))
                 ->count();
 
-            $pivotCount = RoadmapArchive::count();
-            $pivotRate  = $totalUsers > 0 ? round($pivotCount / $totalUsers * 100, 2) : 0;
-
-            $usersWithCareer = User::whereNotNull('current_career_id')->pluck('id');
+            $usersWithCareer = (clone $usersQuery)->whereNotNull('current_career_id')->pluck('id');
+            
             $done  = UserProgress::whereIn('user_id', $usersWithCareer)->where('status', 'done')->count();
             $total = UserProgress::whereIn('user_id', $usersWithCareer)->count();
             $avgCrs = $total > 0 ? round($done / $total * 100, 2) : 0;
+
+            // Pivot rate
+            $pivotQuery = RoadmapArchive::query();
+            if ($institutionName) {
+                $pivotQuery->whereIn('user_id', $usersWithCareer->merge((clone $usersQuery)->pluck('id')));
+            }
+            $pivotCount = $pivotQuery->count();
+            $pivotRate  = $totalUsers > 0 ? round($pivotCount / $totalUsers * 100, 2) : 0;
 
             return [
                 'total_users'           => $totalUsers,
@@ -62,12 +91,21 @@ class ResearchController extends Controller
      * GET /api/v1/research/career-distribution
      * Sebaran pemilihan karir oleh pengguna.
      */
-    public function careerDistribution()
+    public function careerDistribution(Request $request)
     {
-        $data = Cache::remember('research.career_distribution', 3600, function () {
-            return User::whereNotNull('current_career_id')
-                ->join('careers', 'users.current_career_id', '=', 'careers.id')
-                ->selectRaw('careers.name as career, careers.riasec_code, count(users.id) as total_users')
+        $institution = $this->getRequestInstitution($request);
+        $institutionName = $institution ? $institution->name : null;
+        $cacheKey = $institution ? 'research.career_distribution.' . $institution->id : 'research.career_distribution';
+
+        $data = Cache::remember($cacheKey, 3600, function () use ($institutionName) {
+            $query = User::whereNotNull('current_career_id')
+                ->join('careers', 'users.current_career_id', '=', 'careers.id');
+
+            if ($institutionName) {
+                $query->whereRaw('LOWER(users.university_name) = ?', [strtolower(trim($institutionName))]);
+            }
+
+            return $query->selectRaw('careers.name as career, careers.riasec_code, count(users.id) as total_users')
                 ->groupBy('careers.id', 'careers.name', 'careers.riasec_code')
                 ->orderByDesc('total_users')
                 ->get()
@@ -91,15 +129,25 @@ class ResearchController extends Controller
      * GET /api/v1/research/crs-trend
      * Tren Career Readiness Score rata-rata per bulan (6 bulan terakhir).
      */
-    public function crsTrend()
+    public function crsTrend(Request $request)
     {
-        $data = Cache::remember('research.crs_trend', 3600, function () {
+        $institution = $this->getRequestInstitution($request);
+        $institutionName = $institution ? $institution->name : null;
+        $cacheKey = $institution ? 'research.crs_trend.' . $institution->id : 'research.crs_trend';
+
+        $data = Cache::remember($cacheKey, 3600, function () use ($institutionName) {
             $trend = [];
             for ($i = 5; $i >= 0; $i--) {
                 $monthKey = now()->subMonths($i)->format('Y-m');
-                $userIds  = User::whereNotNull('current_career_id')
-                    ->whereRaw('DATE_FORMAT(updated_at, "%Y-%m") <= ?', [$monthKey])
-                    ->pluck('id');
+                
+                $usersQuery = User::whereNotNull('current_career_id')
+                    ->whereRaw('DATE_FORMAT(updated_at, "%Y-%m") <= ?', [$monthKey]);
+
+                if ($institutionName) {
+                    $usersQuery->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))]);
+                }
+
+                $userIds = $usersQuery->pluck('id');
 
                 $done  = UserProgress::whereIn('user_id', $userIds)->where('status', 'done')->count();
                 $total = UserProgress::whereIn('user_id', $userIds)->count();
@@ -126,15 +174,33 @@ class ResearchController extends Controller
      * GET /api/v1/research/pivot-analysis
      * Analisis pola perpindahan karir (Pivot).
      */
-    public function pivotAnalysis()
+    public function pivotAnalysis(Request $request)
     {
-        $data = Cache::remember('research.pivot_analysis', 3600, function () {
-            $totalUsers = User::where('is_admin', false)->count();
-            $totalPivots = RoadmapArchive::count();
-            $uniquePivoters = RoadmapArchive::distinct('user_id')->count('user_id');
+        $institution = $this->getRequestInstitution($request);
+        $institutionName = $institution ? $institution->name : null;
+        $cacheKey = $institution ? 'research.pivot_analysis.' . $institution->id : 'research.pivot_analysis';
+
+        $data = Cache::remember($cacheKey, 3600, function () use ($institutionName) {
+            $usersQuery = User::where('is_admin', false);
+            if ($institutionName) {
+                $usersQuery->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))]);
+            }
+            $totalUsers = (clone $usersQuery)->count();
+
+            $pivotQuery = RoadmapArchive::query();
+            if ($institutionName) {
+                $pivotQuery->whereIn('user_id', (clone $usersQuery)->pluck('id'));
+            }
+            $totalPivots = $pivotQuery->count();
+            $uniquePivoters = (clone $pivotQuery)->distinct('user_id')->count('user_id');
 
             // Distribusi jumlah pivot per user
-            $pivotDistribution = RoadmapArchive::selectRaw('user_id, count(*) as pivot_count')
+            $distributionQuery = RoadmapArchive::query();
+            if ($institutionName) {
+                $distributionQuery->whereIn('user_id', (clone $usersQuery)->pluck('id'));
+            }
+
+            $pivotDistribution = $distributionQuery->selectRaw('user_id, count(*) as pivot_count')
                 ->groupBy('user_id')
                 ->get()
                 ->groupBy('pivot_count')
