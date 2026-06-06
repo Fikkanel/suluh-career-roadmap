@@ -1,0 +1,755 @@
+{
+  "info": {
+    "_postman_id": "suluh-career-roadmap-api-v1",
+    "name": "Suluh Career Roadmap API",
+    "description": "Koleksi endpoint API untuk platform Suluh Career Roadmap.\n\n## Autentikasi\nAPI ini menggunakan tiga metode autentikasi:\n1. **Basic Auth** — untuk endpoint `POST /auth/login`\n2. **JWT Bearer Token** — untuk endpoint yang memerlukan login user\n3. **API Key (X-API-KEY)** — untuk endpoint data publik & riset institusi\n\n## Base URL\n`{{base_url}}/api/v1`\n\n## Cara Penggunaan\n1. Jalankan `POST Register` terlebih dahulu\n2. Jalankan `POST Login` — salin token ke variabel `{{jwt_token}}`\n3. Gunakan endpoint lain dengan token tersebut",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "SULUH-RESEARCH-KEY-2026",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autentikasi (Auth)",
+      "description": "Endpoint untuk registrasi, login, dan logout.",
+      "item": [
+        {
+          "name": "Register (Daftar Akun Baru)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mendaftarkan pengguna baru. Mengembalikan JWT token secara langsung.\n\n**Method:** POST (Tidak memerlukan autentikasi)\n\n**Request Body:**\n- `name` (required) — Nama lengkap\n- `email` (required) — Email unik\n- `password` (required, min:8) — Kata sandi\n- `password_confirmation` (required) — Konfirmasi kata sandi\n\n**Response 201:**\n```json\n{\n  \"message\": \"Registrasi berhasil.\",\n  \"user\": { ... },\n  \"token\": \"eyJ0eXAiOiJKV1Qi...\"\n}\n```"
+          },
+          "response": [
+            {
+              "name": "201 - Registrasi Berhasil",
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Registrasi berhasil.\",\n  \"user\": {\n    \"id\": 1,\n    \"name\": \"Budi Santoso\",\n    \"email\": \"budi@example.com\",\n    \"created_at\": \"2026-06-06T12:00:00.000000Z\"\n  },\n  \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\"\n}"
+            },
+            {
+              "name": "422 - Email Sudah Terdaftar",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Email sudah terdaftar.\",\n  \"errors\": {\n    \"email\": [\"Email ini sudah digunakan.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login (Basic Auth → JWT Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{basic_auth_base64}}",
+                "description": "Format: Base64(email:password). Contoh untuk budi@example.com:password123 → Basic YnVkaUBleGFtcGxlLmNvbTpwYXNzd29yZDEyMw=="
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {"key": "username", "value": "budi@example.com"},
+                {"key": "password", "value": "password123"}
+              ]
+            },
+            "description": "Login menggunakan **HTTP Basic Auth** (email & password di-encode Base64 di header Authorization).\n\nSetelah login berhasil, salin nilai `token` dari response dan set ke variable `{{jwt_token}}`.\n\n**Catatan:** Di Postman, gunakan tab 'Authorization' → pilih 'Basic Auth', isi Username & Password.\n\n**Response 200:**\n```json\n{\n  \"message\": \"Login berhasil.\",\n  \"token\": \"eyJ0eXAiOiJKV1Qi...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 3600\n}\n```"
+          },
+          "response": [
+            {
+              "name": "200 - Login Berhasil",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Login berhasil.\",\n  \"user\": {\n    \"id\": 1,\n    \"name\": \"Budi Santoso\",\n    \"email\": \"budi@example.com\"\n  },\n  \"token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwMDAvYXBpL3YxL2F1dGgvbG9naW4iLCJpYXQiOjE3NDkxMjM2MDB9...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 3600\n}"
+            },
+            {
+              "name": "401 - Kredensial Salah",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Email atau kata sandi tidak cocok.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Membatalkan (invalidate) JWT token yang sedang aktif. Token tidak bisa digunakan lagi setelah ini.\n\n**Memerlukan:** `Authorization: Bearer {{jwt_token}}`"
+          },
+          "response": [
+            {
+              "name": "200 - Logout Berhasil",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Logout berhasil.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Profil Pengguna (User Profile)",
+      "description": "Endpoint untuk membaca dan mengubah profil pengguna yang sedang login.\n\n**Auth:** Bearer JWT Token",
+      "item": [
+        {
+          "name": "GET Profil Saya",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "profile"]
+            },
+            "description": "Mengambil data profil pengguna yang sedang login beserta karir yang dipilih."
+          },
+          "response": [
+            {
+              "name": "200 - Data Profil",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"profile\": {\n    \"name\": \"Budi Santoso\",\n    \"email\": \"budi@example.com\",\n    \"age_range\": \"22-25\",\n    \"education_level\": \"S1\",\n    \"work_experience\": \"0-1 tahun\",\n    \"current_career\": {\n      \"id\": 3,\n      \"name\": \"Data Scientist\",\n      \"riasec_code\": \"IAS\"\n    },\n    \"personality_scores\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "PUT Update Profil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "profile"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso Updated\",\n  \"age_range\": \"22-25\",\n  \"education_level\": \"S1\",\n  \"work_experience\": \"1-3 tahun\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mengubah data profil. Semua field bersifat `sometimes` (opsional)."
+          },
+          "response": [
+            {
+              "name": "200 - Profil Diperbarui",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Profil diperbarui.\",\n  \"profile\": {\n    \"name\": \"Budi Santoso Updated\",\n    \"email\": \"budi@example.com\",\n    \"age_range\": \"22-25\",\n    \"education_level\": \"S1\",\n    \"work_experience\": \"1-3 tahun\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Asesmen Kepribadian (Assessment)",
+      "description": "Endpoint untuk mengsubmit jawaban tes RIASEC & Big Five.\n\n**Auth:** Bearer JWT Token",
+      "item": [
+        {
+          "name": "POST Submit Jawaban Asesmen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assessment/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assessment", "submit"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": {\n    \"1\": 8,\n    \"2\": 6,\n    \"3\": \"a\",\n    \"4\": 7,\n    \"5\": 9\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mengirim jawaban asesmen. Sistem akan menghitung skor RIASEC & Big Five, lalu merekomendasikan karir yang cocok menggunakan algoritma Euclidean Distance.\n\n**Body:** `answers` adalah object di mana key = ID soal dan value = jawaban (integer 1-10 untuk scale, 'a'/'b'/'c'/'d' untuk pilihan ganda)."
+          },
+          "response": [
+            {
+              "name": "200 - Asesmen Berhasil Disubmit",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Asesmen berhasil disubmit.\",\n  \"result\": {\n    \"id\": 1,\n    \"riasec\": {\n      \"R\": 45, \"I\": 78, \"A\": 60, \"S\": 55, \"E\": 40, \"C\": 50\n    },\n    \"big_five\": {\n      \"openness\": 75, \"conscientiousness\": 68, \"extraversion\": 42,\n      \"agreeableness\": 70, \"neuroticism\": 30\n    },\n    \"top_careers\": [\n      {\"id\": 3, \"name\": \"Data Scientist\", \"match_score\": 0.92},\n      {\"id\": 7, \"name\": \"Machine Learning Engineer\", \"match_score\": 0.88}\n    ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Roadmap & Progres Skill",
+      "description": "Endpoint untuk melihat roadmap karir dan mengupdate status belajar skill.\n\n**Auth:** Bearer JWT Token",
+      "item": [
+        {
+          "name": "GET Roadmap Karir Saat Ini",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/roadmap/current",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roadmap", "current"]
+            },
+            "description": "Mengambil roadmap karir pengguna yang sedang aktif, dikelompokkan per level (beginner, intermediate, advanced)."
+          },
+          "response": [
+            {
+              "name": "200 - Data Roadmap",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"career\": {\"id\": 3, \"name\": \"Data Scientist\", \"riasec_code\": \"IAS\"},\n  \"stages\": [\n    {\n      \"level\": \"beginner\",\n      \"status\": \"in_progress\",\n      \"skill_count\": 5,\n      \"completed\": 3,\n      \"skills\": [\n        {\"skill_id\": 1, \"name\": \"Python Dasar\", \"status\": \"done\"},\n        {\"skill_id\": 2, \"name\": \"Statistik Deskriptif\", \"status\": \"done\"},\n        {\"skill_id\": 3, \"name\": \"Pandas & NumPy\", \"status\": \"in_progress\"}\n      ]\n    },\n    {\n      \"level\": \"intermediate\",\n      \"status\": \"not_started\",\n      \"skill_count\": 4,\n      \"completed\": 0,\n      \"skills\": []\n    }\n  ]\n}"
+            },
+            {
+              "name": "404 - Belum Memilih Karir",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Belum memilih karir.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update Status Skill",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "update"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": 1,\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mengubah status belajar sebuah skill. Status yang tersedia: `not_started`, `learning`, `in_progress`, `done`."
+          },
+          "response": [
+            {
+              "name": "200 - Status Diperbarui",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Status skill diperbarui.\"\n}"
+            },
+            {
+              "name": "422 - Validasi Gagal",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"The status field must be one of not_started, learning, in_progress, done.\",\n  \"errors\": {\n    \"status\": [\"The status field must be one of not_started, learning, in_progress, done.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Ringkasan Progres (CRS)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "summary"]
+            },
+            "description": "Mengambil ringkasan progres skill dan Career Readiness Score (CRS) pengguna."
+          },
+          "response": [
+            {
+              "name": "200 - Ringkasan Progres",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"career_readiness_score\": 60,\n  \"total_skills\": 10,\n  \"completed\": 6,\n  \"in_progress\": 2,\n  \"not_started\": 2,\n  \"skills\": [\n    {\"skill_id\": 1, \"name\": \"Python Dasar\", \"level\": \"beginner\", \"status\": \"done\"},\n    {\"skill_id\": 2, \"name\": \"Statistik Deskriptif\", \"level\": \"beginner\", \"status\": \"done\"}\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Skill Gap Analysis",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/skill-gap",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "skill-gap"]
+            },
+            "description": "Menganalisis gap skill antara kemampuan pengguna saat ini dengan target karir, termasuk skill yang belum dikuasai."
+          },
+          "response": [
+            {
+              "name": "200 - Data Skill Gap",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"career_readiness_score\": 60,\n  \"total_skills\": 10,\n  \"completed\": 6,\n  \"gaps\": [\n    {\"skill_id\": 4, \"name\": \"Machine Learning Dasar\", \"level\": \"intermediate\", \"status\": \"not_started\"},\n    {\"skill_id\": 5, \"name\": \"Deep Learning\", \"level\": \"advanced\", \"status\": \"not_started\"}\n  ],\n  \"all_skills\": [\n    {\"skill_id\": 1, \"name\": \"Python Dasar\", \"level\": \"beginner\", \"status\": \"done\", \"transferable\": true}\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Pivot Karir (Career Pivot)",
+      "description": "Endpoint untuk mengarsipkan roadmap lama dan memulai karir baru.\n\n**Auth:** Bearer JWT Token",
+      "item": [
+        {
+          "name": "POST Lakukan Pivot Karir",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/roadmap/pivot",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "roadmap", "pivot"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reflection\": \"Setelah 3 bulan belajar Data Science, saya menyadari passion saya lebih ke arah pengembangan produk. Skill Python yang saya pelajari tetap relevan untuk karir baru.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Mengarsipkan roadmap karir lama (snapshot progress tersimpan di database) dan mereset status karir aktif pengguna, mempersiapkan untuk memilih karir baru."
+          },
+          "response": [
+            {
+              "name": "200 - Pivot Berhasil",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Pivot berhasil. Roadmap lama diarsipkan.\",\n  \"archived\": {\n    \"career\": \"Data Scientist\",\n    \"completed_skills\": 6,\n    \"total_skills\": 10\n  }\n}"
+            },
+            {
+              "name": "400 - Tidak Ada Karir Aktif",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Tidak ada karir aktif untuk di-pivot.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Ekspor Data (Export)",
+      "description": "Endpoint untuk mengunduh data profil karir dalam format JSON atau PDF.\n\n**Auth:** Bearer JWT Token",
+      "item": [
+        {
+          "name": "GET Export Data JSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/export/json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "export", "json"]
+            },
+            "description": "Mengunduh seluruh data karir pengguna (profil, hasil asesmen, progres, arsip roadmap) dalam format JSON."
+          },
+          "response": [
+            {
+              "name": "200 - Data Export JSON",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"exported_at\": \"2026-06-06T12:00:00+07:00\",\n  \"profile\": {\n    \"name\": \"Budi Santoso\",\n    \"email\": \"budi@example.com\",\n    \"current_career\": \"Data Scientist\"\n  },\n  \"assessment_results\": [...],\n  \"current_progress\": [...],\n  \"roadmap_archives\": [...]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Export Portofolio PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/export/pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "export", "pdf"]
+            },
+            "description": "Mengunduh portofolio karir dalam format PDF (file langsung terunduh)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Karir Publik (API Key Auth)",
+      "description": "Endpoint untuk data publik yang dilindungi dengan API Key.\n\n**Auth:** Header `X-API-KEY: {{api_key}}`",
+      "item": [
+        {
+          "name": "GET Daftar Semua Karir",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/careers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "careers"]
+            },
+            "description": "Mengambil seluruh daftar karir yang tersedia di platform beserta skill yang dibutuhkan.\n\n**Auth:** Header `X-API-KEY` (API Key institusi atau master key dari `.env`)"
+          },
+          "response": [
+            {
+              "name": "200 - Daftar Karir",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"careers\": [\n    {\n      \"id\": 1,\n      \"name\": \"Data Scientist\",\n      \"description\": \"Menganalisis data besar untuk insight bisnis\",\n      \"riasec_code\": \"IAS\",\n      \"industry_standard\": \"ESCO 2.5\",\n      \"skills\": [\n        {\"id\": 1, \"name\": \"Python\", \"level\": \"beginner\"},\n        {\"id\": 2, \"name\": \"Machine Learning\", \"level\": \"intermediate\"}\n      ]\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 - API Key Tidak Valid",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"API Key tidak valid.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Data Dampak Publik",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/impact/public",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "impact", "public"]
+            },
+            "description": "Data dampak publik platform secara agregat anonim."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Research API (Institusi Mitra)",
+      "description": "Endpoint untuk data riset akademik yang dikhususkan untuk institusi mitra (universitas).\nSemua data bersifat **agregat anonim** — tidak ada data personal (PII) yang dikembalikan.\n\n**Auth:** Header `X-API-KEY: {{api_key}}`",
+      "item": [
+        {
+          "name": "GET Ringkasan Platform",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/research/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "research", "summary"]
+            },
+            "description": "Statistik ringkasan platform: total user, user aktif 30 hari, rata-rata CRS, dan tingkat pivot."
+          },
+          "response": [
+            {
+              "name": "200 - Ringkasan Platform",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"endpoint\": \"research/summary\",\n  \"note\": \"Seluruh data merupakan agregat anonim. Tidak ada data personal yang dikembalikan.\",\n  \"data\": {\n    \"total_users\": 1250,\n    \"active_users_30d\": 430,\n    \"avg_career_readiness\": 67.5,\n    \"pivot_rate_pct\": 18.4,\n    \"users_with_career\": 980\n  },\n  \"cached_at\": \"2026-06-06T12:00:00+07:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Distribusi Pilihan Karir",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/research/career-distribution",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "research", "career-distribution"]
+            },
+            "description": "Distribusi karir yang dipilih pengguna diseluruh platform, diurutkan berdasarkan jumlah pengguna terbanyak."
+          },
+          "response": [
+            {
+              "name": "200 - Distribusi Karir",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"endpoint\": \"research/career-distribution\",\n  \"note\": \"Distribusi pilihan karir. Tidak ada data pengguna individual yang disertakan.\",\n  \"data\": [\n    {\"career\": \"Data Scientist\", \"riasec_code\": \"IAS\", \"total_users\": 245},\n    {\"career\": \"Software Engineer\", \"riasec_code\": \"IRC\", \"total_users\": 198},\n    {\"career\": \"UI/UX Designer\", \"riasec_code\": \"AES\", \"total_users\": 156}\n  ],\n  \"cached_at\": \"2026-06-06T12:00:00+07:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Tren CRS per Bulan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/research/crs-trend",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "research", "crs-trend"]
+            },
+            "description": "Tren rata-rata Career Readiness Score (CRS) per bulan dalam 6 bulan terakhir."
+          },
+          "response": [
+            {
+              "name": "200 - Tren CRS",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"endpoint\": \"research/crs-trend\",\n  \"note\": \"Tren CRS rata-rata. Data agregat 6 bulan terakhir.\",\n  \"data\": [\n    {\"month\": \"2026-01\", \"avg_crs\": 45.2, \"active_users\": 320},\n    {\"month\": \"2026-02\", \"avg_crs\": 52.1, \"active_users\": 380},\n    {\"month\": \"2026-03\", \"avg_crs\": 58.7, \"active_users\": 410},\n    {\"month\": \"2026-04\", \"avg_crs\": 61.3, \"active_users\": 425},\n    {\"month\": \"2026-05\", \"avg_crs\": 65.8, \"active_users\": 430},\n    {\"month\": \"2026-06\", \"avg_crs\": 67.5, \"active_users\": 430}\n  ],\n  \"cached_at\": \"2026-06-06T12:00:00+07:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Analisis Pivot Karir",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-KEY",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/research/pivot-analysis",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "research", "pivot-analysis"]
+            },
+            "description": "Analisis pola perpindahan karir (pivot): total pivot, unique pivoters, tingkat pivot, dan distribusi berapa kali pivot per user."
+          },
+          "response": [
+            {
+              "name": "200 - Analisis Pivot",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"endpoint\": \"research/pivot-analysis\",\n  \"note\": \"Analisis perpindahan karir (Pivot). Tidak ada data identitas pengguna yang disertakan.\",\n  \"data\": {\n    \"total_pivots\": 230,\n    \"unique_pivoters\": 198,\n    \"pivot_rate_pct\": 15.84,\n    \"pivot_distribution\": {\n      \"1\": 167,\n      \"2\": 28,\n      \"3\": 3\n    }\n  },\n  \"cached_at\": \"2026-06-06T12:00:00+07:00\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
