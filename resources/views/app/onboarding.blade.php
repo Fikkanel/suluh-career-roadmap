@@ -31,6 +31,12 @@
                 fieldName="major" />
 
             <x-context-prompt
+                question="Nama Kampus/Universitasmu saat ini/terakhir?"
+                helperText="Masukkan nama perguruan tinggi tempatmu belajar (misal: Universitas Airlangga, ITS, Universitas Negeri Malang)."
+                sensitivity="required"
+                fieldName="university_name" />
+
+            <x-context-prompt
                 question="Apakah kamu sudah punya pengalaman kerja?"
                 helperText=""
                 sensitivity="required"

@@ -17,6 +17,7 @@ class OnboardingController extends Controller
             'age_range'             => 'required|string|max:20',
             'education_level'       => 'required|string|max:50',
             'major'                 => 'required|string|max:100',
+            'university_name'       => 'required|string|max:150',
             'work_experience'       => 'required|string|max:20',
             'province'              => 'required|string|max:100',
             'exploration_readiness' => 'required|string|max:20',

@@ -19,11 +19,16 @@ class InstitutionDashboardController extends Controller
 {
     public function index()
     {
-        $stats = Cache::remember('institution.dashboard.stats', 1800, function () {
-            // Hanya hitung pengguna dengan role 'user' (bukan admin/mentor/institution)
-            $allUsers = User::where('role', 'user')->orWhere(function($q) {
-                $q->where('is_admin', false)->whereNull('role');
-            });
+        $institutionName = auth()->user()->name;
+        $cacheKey = 'institution.dashboard.stats.' . auth()->id();
+
+        $stats = Cache::remember($cacheKey, 1800, function () use ($institutionName) {
+            // Saring pengguna yang mengisi university_name sesuai dengan nama institusi (case-insensitive)
+            $allUsers = User::where(function($q) {
+                $q->where('role', 'user')->orWhere(function($q2) {
+                    $q2->where('is_admin', false)->whereNull('role');
+                });
+            })->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))]);
 
             $totalUsers  = (clone $allUsers)->count();
             $activeUsers = (clone $allUsers)->where('updated_at', '>=', now()->subDays(30))->count();
@@ -40,12 +45,13 @@ class InstitutionDashboardController extends Controller
             ))->count();
             $pivotRate = $totalUsers > 0 ? round($pivotCount / $totalUsers * 100, 1) : 0;
 
-            // Sebaran karir (agregat)
+            // Sebaran karir (agregat disaring per kampus)
             $careerDistribution = User::where(function($q) {
                     $q->where('role', 'user')->orWhere(function($q2) {
                         $q2->where('is_admin', false)->whereNull('role');
                     });
                 })
+                ->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))])
                 ->whereNotNull('current_career_id')
                 ->join('careers', 'users.current_career_id', '=', 'careers.id')
                 ->selectRaw('careers.name as career_name, careers.riasec_code, count(users.id) as total')
@@ -65,8 +71,13 @@ class InstitutionDashboardController extends Controller
                 else                 $progressBuckets['76-100%']++;
             }
 
-            // Tren pengguna baru per bulan
-            $monthlyGrowth = User::where('is_admin', false)
+            // Tren pengguna baru per bulan (disaring per kampus)
+            $monthlyGrowth = User::where(function($q) {
+                    $q->where('role', 'user')->orWhere(function($q2) {
+                        $q2->where('is_admin', false)->whereNull('role');
+                    });
+                })
+                ->whereRaw('LOWER(university_name) = ?', [strtolower(trim($institutionName))])
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, count(*) as total')
                 ->groupBy('month')

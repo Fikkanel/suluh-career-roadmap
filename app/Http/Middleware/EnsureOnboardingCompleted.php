@@ -18,6 +18,7 @@ class EnsureOnboardingCompleted
                 'age_range',
                 'education_level',
                 'major',
+                'university_name',
                 'work_experience',
                 'province',
                 'exploration_readiness',
